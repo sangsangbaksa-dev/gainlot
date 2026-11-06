@@ -6,7 +6,7 @@ import {
   filingInfo, splitCsv, parseTradeCsv, salesToCsv, makeBackup, parseBackup,
 } from '../logic.js';
 import { TAX_CONSTANTS, DEFAULT_OPTIONS } from '../constants.js';
-import { buildPrompt, buildRequest, parseReply, isPlausibleKey, ruleBasedAnalysis, buildPayload } from '../ai.js';
+import { buildPrompt, buildRequest, parseReply, isPlausibleKey, ruleBasedAnalysis, buildPayload, sendToAnthropic } from '../ai.js';
 
 const DED = TAX_CONSTANTS.basicDeduction;
 let seqCounter = 0;
@@ -550,5 +550,53 @@ describe('AI 패널 로직 (네트워크 없이 검증)', () => {
     });
     assert.ok(noTax.some((l) => l.includes('공제 여유')));
     assert.ok(noTax.every((l) => typeof l === 'string' && l.length < 300));
+  });
+});
+
+describe('AI 네트워크 래퍼 (가짜 fetch)', () => {
+  const payload = { taxYear: 2026, summary: {}, positions: [] };
+  const key = 'sk-ant-api03-' + 'b'.repeat(40);
+  const fakeRes = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
+
+  test('정상 응답이면 text를 돌려주고 요청에는 키 헤더가 붙는다', async () => {
+    let seen;
+    const r = await sendToAnthropic({
+      key,
+      payload,
+      fetchImpl: async (url, opts) => {
+        seen = { url, opts };
+        return fakeRes(200, { content: [{ type: 'text', text: '요약입니다.' }] });
+      },
+    });
+    assert.equal(r.ok, true);
+    assert.equal(r.text, '요약입니다.');
+    assert.equal(seen.url, 'https://api.anthropic.com/v1/messages');
+    assert.equal(seen.opts.headers['x-api-key'], key);
+  });
+
+  test('401, 429, 기타 HTTP 오류는 사용자용 메시지로 바꾼다', async () => {
+    const run = (status) => sendToAnthropic({ key, payload, fetchImpl: async () => fakeRes(status, {}) });
+    assert.match((await run(401)).error, /키가 거부/);
+    assert.match((await run(429)).error, /요청이 너무 많/);
+    assert.match((await run(500)).error, /HTTP 500/);
+  });
+
+  test('네트워크 실패와 시간 초과를 구분한다', async () => {
+    const fail = await sendToAnthropic({ key, payload, fetchImpl: async () => { throw new Error('offline'); } });
+    assert.match(fail.error, /네트워크/);
+    const slow = await sendToAnthropic({
+      key, payload, timeoutMs: 5,
+      fetchImpl: (url, opts) => new Promise((_, reject) => {
+        opts.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+      }),
+    });
+    assert.match(slow.error, /시간이 초과/);
+  });
+
+  test('키 형식이 틀리면 네트워크를 호출하지 않는다', async () => {
+    let called = false;
+    const r = await sendToAnthropic({ key: 'bad', payload, fetchImpl: async () => { called = true; return fakeRes(200, {}); } });
+    assert.equal(r.ok, false);
+    assert.equal(called, false);
   });
 });
