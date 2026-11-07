@@ -3,31 +3,31 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>gainlot · 해외주식 양도소득세 계산기</title>
-  <meta name="description" content="해외주식 양도소득세를 FIFO 선입선출로 계산하고, 5월 신고용 CSV와 연말 절세 시뮬레이션을 만드는 무료 도구. 데이터는 브라우저에만 저장됩니다.">
-  <meta name="theme-color" content="#4F46E5">
-  <meta property="og:type" content="website">
-  <meta property="og:locale" content="ko_KR">
-  <meta property="og:title" content="gainlot · 해외주식 양도소득세 계산기">
-  <meta property="og:description" content="FIFO 취득가 계산, 연말 절세 시뮬레이터, 신고용 CSV. 데이터는 이 브라우저에만 저장됩니다.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234F46E5'/%3E%3Cpath d='M16 44 L28 26 L36 35 L48 18' stroke='white' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <title data-i18n="docTitle">gainlot · 해외주식 양도소득세 계산기</title>
+  <meta name="description" content="해외주식 양도소득세를 FIFO 선입선출로 계산하고, 5월 신고용 CSV와 연말 절세 시뮬레이션을 만드는 무료 도구. 데이터는 브라우저에만 저장됩니다." data-i18n-attr="content=metaDesc">
+  <meta name="theme-color" content="#1F4E9A" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0E1420" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231F4E9A'/%3E%3Cpath d='M16 44 L28 26 L36 35 L48 18' stroke='white' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <a class="skip" href="#app">계산기로 바로 가기</a>
+  <a class="skip" href="#app" data-i18n="skipLink">계산기로 바로 가기</a>
 
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <a class="brand" href="#top" aria-label="gainlot 홈">
-        <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="currentColor" class="logo-bg"/><path d="M16 44 L28 26 L36 35 L48 18" stroke="var(--logo-fg)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <a class="brand" href="#top" data-i18n-attr="aria-label=homeAria">
+        <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="12" fill="currentColor" class="logo-bg"/><path d="M16 44 L28 26 L36 35 L48 18" stroke="var(--logo-fg)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span>gainlot</span>
       </a>
-      <nav class="topnav" aria-label="주요 메뉴">
-        <a href="#features">기능</a>
-        <a href="#how">사용법</a>
-        <a href="#faq">질문</a>
+      <nav class="topnav" data-i18n-attr="aria-label=menuLabel">
+        <a href="#features" data-i18n="navFeatures">기능</a>
+        <a href="#how" data-i18n="navHow">사용법</a>
+        <a href="#faq" data-i18n="navFaq">질문</a>
       </nav>
-      <a class="btn btn-primary btn-sm" href="#app">계산 시작</a>
+      <div class="top-tools">
+        <label class="lang-field"><span class="sr-only" data-i18n="langLabel">언어</span><select id="lang-select" aria-label="언어"></select></label>
+        <a class="btn btn-primary btn-sm" href="#app" data-i18n="navStart">계산 시작</a>
+      </div>
     </div>
   </header>
 
@@ -35,43 +35,43 @@
     <section class="hero">
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <p class="kicker">2026년 귀속 · 2027년 5월 신고 준비</p>
-          <h1>해외주식 양도세를 거래내역에서 바로 계산합니다</h1>
-          <p class="lede">증권사 체결내역을 붙여넣으면 선입선출로 취득가를 맞추고, 계좌별 손익과 연도 비교, 신고용 CSV와 인쇄용 리포트를 만듭니다. 데이터는 이 브라우저에만 저장됩니다.</p>
+          <p class="kicker" data-i18n="heroKicker">2026년 귀속 · 2027년 5월 신고 준비</p>
+          <h1 data-i18n="heroTitle">해외주식 양도세를 거래내역에서 바로 계산합니다</h1>
+          <p class="lede" data-i18n="heroLede">증권사 체결내역을 붙여넣으면 선입선출로 취득가를 맞추고, 계좌별 손익과 연도 비교, 신고용 CSV와 인쇄용 리포트를 만듭니다. 데이터는 이 브라우저에만 저장됩니다.</p>
           <div class="hero-actions">
-            <a class="btn btn-primary btn-lg" href="#app">계산기 열기</a>
-            <a class="btn btn-ghost btn-lg" href="#how">작동 방식 보기</a>
+            <a class="btn btn-primary btn-lg" href="#app" data-i18n="heroOpen">계산기 열기</a>
+            <a class="btn btn-ghost btn-lg" href="#how" data-i18n="heroHow">작동 방식 보기</a>
           </div>
-          <ul class="hero-points" aria-label="핵심 내용">
-            <li>선입선출 매칭, 부분 체결 지원</li>
-            <li>계좌별 분리 보기와 합산 보기</li>
-            <li>가입 없이 브라우저에서 바로 사용</li>
+          <ul class="hero-points" data-i18n-attr="aria-label=heroPointsLabel">
+            <li data-i18n="heroPt1">선입선출 매칭, 부분 체결 지원</li>
+            <li data-i18n="heroPt2">계좌별 분리 보기와 합산 보기</li>
+            <li data-i18n="heroPt3">가입 없이 브라우저에서 바로 사용</li>
           </ul>
-          <p class="fine">세율, 기본공제, 신고 기간은 모두 확인 필요 상태입니다. 공식 자료로 다시 확인하지 않았으니 참고용으로만 보세요.</p>
+          <p class="fine" data-i18n="heroFine">세율, 기본공제, 신고 기간은 모두 확인 필요 상태입니다. 공식 자료로 다시 확인하지 않았으니 참고용으로만 보세요.</p>
         </div>
 
-        <figure class="shot" aria-label="연간 요약 화면 예시 (가상 숫자)">
-          <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span>gainlot · 연간 요약</span></div>
+        <figure class="shot" data-i18n-attr="aria-label=shotSummaryLabel">
+          <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span data-i18n="shotSummaryBar">gainlot · 연간 요약</span></div>
           <div class="shot-body">
             <div class="shot-head">
-              <p class="shot-title">2026년 귀속 · 계좌 합산</p>
-              <span class="shot-tag">예시 숫자</span>
+              <p class="shot-title" data-i18n="shotSummaryTitle">2026년 귀속 · 계좌 합산</p>
+              <span class="shot-tag" data-i18n="sampleNumTag">예시 숫자</span>
             </div>
             <div class="mini-stats">
-              <div class="mini-stat"><span>양도차익 합계</span><b>1,240,000원</b></div>
-              <div class="mini-stat"><span>양도차손 합계</span><b>310,000원</b></div>
-              <div class="mini-stat"><span>과세표준 (공제 후)</span><b>0원</b></div>
-              <div class="mini-stat key"><span>예상 세액 (22%, 확인 필요)</span><b>0원</b></div>
+              <div class="mini-stat"><span data-i18n="shotGain">양도차익 합계</span><b data-i18n="shotGainV">1,240,000원</b></div>
+              <div class="mini-stat"><span data-i18n="shotLoss">양도차손 합계</span><b data-i18n="shotLossV">310,000원</b></div>
+              <div class="mini-stat"><span data-i18n="shotBase">과세표준 (공제 후)</span><b data-i18n="shotZero">0원</b></div>
+              <div class="mini-stat key"><span data-i18n="shotTax">예상 세액 (22%, 확인 필요)</span><b data-i18n="shotZero">0원</b></div>
             </div>
             <table class="mini-table">
-              <caption class="sr-only">연도별 비교 예시</caption>
-              <thead><tr><th scope="col">귀속</th><th scope="col" class="n">순손익</th><th scope="col" class="n hide-s">과세표준</th><th scope="col" class="n">공제 여유</th></tr></thead>
+              <caption class="sr-only" data-i18n="shotYearCap">연도별 비교 예시</caption>
+              <thead><tr><th scope="col" data-i18n="colYear">귀속</th><th scope="col" class="n" data-i18n="colNet">순손익</th><th scope="col" class="n hide-s" data-i18n="colBase">과세표준</th><th scope="col" class="n" data-i18n="colHeadroom">공제 여유</th></tr></thead>
               <tbody>
-                <tr><th scope="row">2025년</th><td class="n">+460,000원</td><td class="n hide-s">0원</td><td class="n">2,039,000원</td></tr>
-                <tr class="cur"><th scope="row">2026년</th><td class="n">+930,000원</td><td class="n hide-s">0원</td><td class="n">1,570,000원</td></tr>
+                <tr><th scope="row" data-i18n="yr2025">2025년</th><td class="n">+460,000원</td><td class="n hide-s" data-i18n="shotZero">0원</td><td class="n">2,039,000원</td></tr>
+                <tr class="cur"><th scope="row" data-i18n="yr2026">2026년</th><td class="n">+930,000원</td><td class="n hide-s" data-i18n="shotZero">0원</td><td class="n">1,570,000원</td></tr>
               </tbody>
             </table>
-            <p class="shot-foot">공제 여유 안에서는 세금이 0원으로 계산됩니다 (기준 확인 필요).</p>
+            <p class="shot-foot" data-i18n="shotFoot">공제 여유 안에서는 세금이 0원으로 계산됩니다 (기준 확인 필요).</p>
           </div>
         </figure>
       </div>
@@ -79,25 +79,25 @@
 
     <section id="features" class="section">
       <div class="wrap">
-        <p class="kicker">기능</p>
-        <h2>증권사 내역을 신고서 숫자로 바꿔 드려요</h2>
+        <p class="kicker" data-i18n="navFeatures">기능</p>
+        <h2 data-i18n="featTitle">증권사 내역을 신고서 숫자로 바꿔 드려요</h2>
         <div class="feature-list">
           <div class="feature-row">
             <div class="feature-copy">
-              <h3>증권사 내보내기 파일을 그대로 붙여넣습니다</h3>
-              <p>체결일자, 매매구분, 체결수량, 적용환율처럼 흔한 열 이름을 인식합니다. 원화 단가 열이나 취소 체결이 섞이면 줄 번호와 이유를 알려 주고, 나머지만 가져옵니다.</p>
+              <h3 data-i18n="feat1T">증권사 내보내기 파일을 그대로 붙여넣습니다</h3>
+              <p data-i18n="feat1D">체결일자, 매매구분, 체결수량, 적용환율처럼 흔한 열 이름을 인식합니다. 원화 단가 열이나 취소 체결이 섞이면 줄 번호와 이유를 알려 주고, 나머지만 가져옵니다.</p>
             </div>
-            <figure class="shot" aria-label="CSV 가져오기 결과 화면 예시">
-              <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span>가져오기 결과</span></div>
+            <figure class="shot" data-i18n-attr="aria-label=feat1Label">
+              <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span data-i18n="feat1Bar">가져오기 결과</span></div>
               <div class="shot-body">
-                <p class="rep-ok">12건을 가져왔습니다. 이미 있던 거래 1건은 건너뛰었습니다.</p>
-                <p class="hint">인식한 열: 체결일자→날짜 · 종목코드→종목 · 매매구분→구분 · 체결수량→수량 · 적용환율→환율</p>
+                <p class="rep-ok" data-i18n="feat1Ok">12건을 가져왔습니다. 이미 있던 거래 1건은 건너뛰었습니다.</p>
+                <p class="hint" data-i18n="feat1Map">인식한 열: 체결일자→날짜 · 종목코드→종목 · 매매구분→구분 · 체결수량→수량 · 적용환율→환율</p>
                 <table class="mini-table">
-                  <caption class="sr-only">가져오지 않은 행</caption>
-                  <thead><tr><th scope="col">줄</th><th scope="col">사유</th></tr></thead>
+                  <caption class="sr-only" data-i18n="feat1Cap">가져오지 않은 행</caption>
+                  <thead><tr><th scope="col" data-i18n="colLine">줄</th><th scope="col" data-i18n="colReason">사유</th></tr></thead>
                   <tbody>
-                    <tr><th scope="row">7행</th><td>수량: 숫자만 입력하세요 (예: 2.5)</td></tr>
-                    <tr><th scope="row">9행</th><td>구분: 취소·정정 체결은 가져올 수 없습니다</td></tr>
+                    <tr><th scope="row" data-i18n="feat1Row1">7행</th><td data-i18n="feat1Err1">수량: 숫자만 입력하세요 (예: 2.5)</td></tr>
+                    <tr><th scope="row" data-i18n="feat1Row2">9행</th><td data-i18n="feat1Err2">구분: 취소·정정 체결은 가져올 수 없습니다</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -106,46 +106,46 @@
 
           <div class="feature-row flip">
             <div class="feature-copy">
-              <h3>계좌별로 나눠 보고, 세금은 한 번에 계산합니다</h3>
-              <p>계좌마다 이름을 붙이면 같은 계좌 안에서만 매도 수량을 맞춥니다. 계좌별 손익은 나눠 보고, 기본공제는 사람 단위로 한 번만 적용해 세액을 계산합니다 (확인 필요).</p>
+              <h3 data-i18n="feat2T">계좌별로 나눠 보고, 세금은 한 번에 계산합니다</h3>
+              <p data-i18n="feat2D">계좌마다 이름을 붙이면 같은 계좌 안에서만 매도 수량을 맞춥니다. 계좌별 손익은 나눠 보고, 기본공제는 사람 단위로 한 번만 적용해 세액을 계산합니다 (확인 필요).</p>
             </div>
-            <figure class="shot" aria-label="계좌별 분리 보기 화면 예시">
-              <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span>연간 요약 · 계좌별 분리</span></div>
+            <figure class="shot" data-i18n-attr="aria-label=feat2Label">
+              <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span data-i18n="feat2Bar">연간 요약 · 계좌별 분리</span></div>
               <div class="shot-body">
                 <div class="shot-head">
-                  <p class="shot-title">2026년 귀속</p>
-                  <div class="seg" aria-hidden="true"><span>계좌 합산</span><span class="on">계좌별 분리</span></div>
+                  <p class="shot-title" data-i18n="feat2Title">2026년 귀속</p>
+                  <div class="seg" aria-hidden="true"><span data-i18n="viewCombined">계좌 합산</span><span class="on" data-i18n="viewSplit">계좌별 분리</span></div>
                 </div>
                 <table class="mini-table">
-                  <caption class="sr-only">계좌별 손익 예시</caption>
-                  <thead><tr><th scope="col">계좌</th><th scope="col" class="n">매도</th><th scope="col" class="n">순손익</th></tr></thead>
+                  <caption class="sr-only" data-i18n="feat2Cap">계좌별 손익 예시</caption>
+                  <thead><tr><th scope="col" data-i18n="colAccount">계좌</th><th scope="col" class="n" data-i18n="colSales">매도</th><th scope="col" class="n" data-i18n="colNet">순손익</th></tr></thead>
                   <tbody>
-                    <tr><th scope="row">예시 계좌 1</th><td class="n">1건</td><td class="n">+143,000원</td></tr>
-                    <tr><th scope="row">예시 계좌 2</th><td class="n">1건</td><td class="n">−81,000원</td></tr>
+                    <tr><th scope="row" data-i18n="sampleAcct1">예시 계좌 1</th><td class="n" data-i18n="feat2Cnt1">1건</td><td class="n">+143,000원</td></tr>
+                    <tr><th scope="row" data-i18n="sampleAcct2">예시 계좌 2</th><td class="n" data-i18n="feat2Cnt1">1건</td><td class="n">−81,000원</td></tr>
                   </tbody>
                 </table>
-                <p class="shot-foot">세액은 합산 기준으로만 계산합니다. 예시 숫자입니다.</p>
+                <p class="shot-foot" data-i18n="feat2Foot">세액은 합산 기준으로만 계산합니다. 예시 숫자입니다.</p>
               </div>
             </figure>
           </div>
 
           <div class="feature-row">
             <div class="feature-copy">
-              <h3>연말에 팔면 세금이 얼마나 달라지는지 봅니다</h3>
-              <p>현재가를 넣으면 미실현 손익이 보이고, 매도 수량을 넣으면 같은 선입선출 규칙으로 세금 차이를 계산합니다. 공제 여유를 채우는 제안은 근사치이고, 결과 카드의 세금이 정확한 계산입니다.</p>
+              <h3 data-i18n="feat3T">연말에 팔면 세금이 얼마나 달라지는지 봅니다</h3>
+              <p data-i18n="feat3D">현재가를 넣으면 미실현 손익이 보이고, 매도 수량을 넣으면 같은 선입선출 규칙으로 세금 차이를 계산합니다. 공제 여유를 채우는 제안은 근사치이고, 결과 카드의 세금이 정확한 계산입니다.</p>
             </div>
-            <figure class="shot" aria-label="절세 시뮬레이터 화면 예시">
-              <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span>절세 시뮬레이터</span></div>
+            <figure class="shot" data-i18n-attr="aria-label=feat3Label">
+              <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span data-i18n="feat3Bar">절세 시뮬레이터</span></div>
               <div class="shot-body">
                 <div class="field-sim" aria-hidden="true">
-                  <div><span>종목 AAPL 현재가 (USD)</span><b>$200.00</b></div>
-                  <div><span>현재 환율 (원/달러)</span><b>1,380</b></div>
+                  <div><span data-i18n="feat3Price">종목 AAPL 현재가 (USD)</span><b>$200.00</b></div>
+                  <div><span data-i18n="feat3Fx">현재 환율 (원/달러)</span><b>1,380</b></div>
                 </div>
                 <div class="mini-stats">
-                  <div class="mini-stat"><span>현재 예상 세액</span><b>220,000원</b></div>
-                  <div class="mini-stat key"><span>세금 차이</span><b>220,000원 절세</b></div>
+                  <div class="mini-stat"><span data-i18n="feat3Now">현재 예상 세액</span><b>220,000원</b></div>
+                  <div class="mini-stat key"><span data-i18n="feat3Diff">세금 차이</span><b data-i18n="feat3DiffV">220,000원 절세</b></div>
                 </div>
-                <p class="shot-foot">예시 숫자입니다. 실제 결과는 입력값과 확인 필요 상수에 따라 달라집니다.</p>
+                <p class="shot-foot" data-i18n="feat3Foot">예시 숫자입니다. 실제 결과는 입력값과 확인 필요 상수에 따라 달라집니다.</p>
               </div>
             </figure>
           </div>
@@ -155,23 +155,23 @@
 
     <section id="how" class="section section-alt">
       <div class="wrap">
-        <p class="kicker">사용법</p>
-        <h2>3단계면 충분합니다</h2>
+        <p class="kicker" data-i18n="navHow">사용법</p>
+        <h2 data-i18n="howTitle">3단계면 충분합니다</h2>
         <ol class="steps">
           <li class="step">
             <span class="step-num" aria-hidden="true">1</span>
-            <h3>거래 내역 넣기</h3>
-            <p>날짜, 계좌, 종목, 매수·매도, 수량, 달러 단가, 수수료, 거래 환율을 입력하거나 CSV를 붙여넣습니다. 빈 화면이면 예시 데이터로 먼저 둘러볼 수 있습니다.</p>
+            <h3 data-i18n="step1T">거래 내역 넣기</h3>
+            <p data-i18n="step1D">날짜, 계좌, 종목, 매수·매도, 수량, 달러 단가, 수수료, 거래 환율을 입력하거나 CSV를 붙여넣습니다. 빈 화면이면 예시 데이터로 먼저 둘러볼 수 있습니다.</p>
           </li>
           <li class="step">
             <span class="step-num" aria-hidden="true">2</span>
-            <h3>연도별 결과 확인</h3>
-            <p>매도 건별 차익과 연간 과세표준, 예상 세액을 확인합니다. 연도 비교표와 계좌별 분리 보기로 나눠서 볼 수 있습니다.</p>
+            <h3 data-i18n="step2T">연도별 결과 확인</h3>
+            <p data-i18n="step2D">매도 건별 차익과 연간 과세표준, 예상 세액을 확인합니다. 연도 비교표와 계좌별 분리 보기로 나눠서 볼 수 있습니다.</p>
           </li>
           <li class="step">
             <span class="step-num" aria-hidden="true">3</span>
-            <h3>신고용 CSV와 리포트</h3>
-            <p>신고 준비 탭에서 체크리스트를 확인하고, 매도 건별 CSV를 받거나 인쇄용 리포트를 출력해 신고 자료와 대조합니다.</p>
+            <h3 data-i18n="step3T">신고용 CSV와 리포트</h3>
+            <p data-i18n="step3D">신고 준비 탭에서 체크리스트를 확인하고, 매도 건별 CSV를 받거나 인쇄용 리포트를 출력해 신고 자료와 대조합니다.</p>
           </li>
         </ol>
       </div>
@@ -179,22 +179,22 @@
 
     <section id="app" class="section app" aria-labelledby="app-title">
       <div class="wrap">
-        <p class="kicker">계산기</p>
-        <h2 id="app-title">양도소득 계산</h2>
-        <p class="disclaimer" role="note">이 계산은 참고용 추정치이며 세무·법률·투자 자문이 아닙니다. 실제 신고 전 세무사 또는 국세청 자료로 확인하세요.</p>
+        <p class="kicker" data-i18n="appKicker">계산기</p>
+        <h2 id="app-title" data-i18n="appTitle">양도소득 계산</h2>
+        <p class="disclaimer" role="note" data-i18n="appDisclaimer">이 계산은 참고용 추정치이며 세무·법률·투자 자문이 아닙니다. 실제 신고 전 세무사 또는 국세청 자료로 확인하세요.</p>
         <p class="rules-badge" id="rules-badge"></p>
         <p class="storage-notice" id="storage-notice" role="status" hidden></p>
         <div class="sample-banner" id="sample-banner" role="status" hidden>
-          <p>지금 보이는 거래는 <strong>예시 데이터(가상의 숫자)</strong>입니다. 실제 거래를 넣기 전에 지우세요.</p>
-          <button type="button" class="btn btn-ghost btn-sm" id="clear-sample">예시 거래만 지우기</button>
+          <p><span data-i18n="sampleBannerA">지금 보이는 거래는</span> <strong data-i18n="sampleBannerB">예시 데이터(가상의 숫자)</strong><span data-i18n="sampleBannerC">입니다. 실제 거래를 넣기 전에 지우세요.</span></p>
+          <button type="button" class="btn btn-ghost btn-sm" id="clear-sample" data-i18n="clearSampleBtn">예시 거래만 지우기</button>
         </div>
 
-        <div class="tabs" role="tablist" aria-label="계산기 메뉴">
-          <button type="button" role="tab" id="tab-btn-trades" aria-controls="panel-trades" aria-selected="true" data-tab="trades">거래 입력</button>
-          <button type="button" role="tab" id="tab-btn-year" aria-controls="panel-year" aria-selected="false" tabindex="-1" data-tab="year">연간 요약</button>
-          <button type="button" role="tab" id="tab-btn-sim" aria-controls="panel-sim" aria-selected="false" tabindex="-1" data-tab="sim">절세 시뮬레이터</button>
-          <button type="button" role="tab" id="tab-btn-filing" aria-controls="panel-filing" aria-selected="false" tabindex="-1" data-tab="filing">신고 준비</button>
-          <button type="button" role="tab" id="tab-btn-ai" aria-controls="panel-ai" aria-selected="false" tabindex="-1" data-tab="ai">AI 분석</button>
+        <div class="tabs" role="tablist" data-i18n-attr="aria-label=appTabsLabel">
+          <button type="button" role="tab" id="tab-btn-trades" aria-controls="panel-trades" aria-selected="true" data-tab="trades" data-i18n="tabTrades">거래 입력</button>
+          <button type="button" role="tab" id="tab-btn-year" aria-controls="panel-year" aria-selected="false" tabindex="-1" data-tab="year" data-i18n="tabYear">연간 요약</button>
+          <button type="button" role="tab" id="tab-btn-sim" aria-controls="panel-sim" aria-selected="false" tabindex="-1" data-tab="sim" data-i18n="tabSim">절세 시뮬레이터</button>
+          <button type="button" role="tab" id="tab-btn-filing" aria-controls="panel-filing" aria-selected="false" tabindex="-1" data-tab="filing" data-i18n="tabFiling">신고 준비</button>
+          <button type="button" role="tab" id="tab-btn-ai" aria-controls="panel-ai" aria-selected="false" tabindex="-1" data-tab="ai" data-i18n="tabAi">AI 분석</button>
         </div>
 
         <div class="ledger-alert" id="ledger-alert" role="alert" hidden></div>
@@ -204,84 +204,84 @@
           <datalist id="account-options"></datalist>
           <div class="panel-grid">
             <form class="card form" id="trade-form" novalidate>
-              <h3 id="trade-form-title">거래 입력</h3>
+              <h3 id="trade-form-title" data-i18n="tradeFormTitle">거래 입력</h3>
               <div class="field-grid">
                 <label class="field">
-                  <span>체결일</span>
+                  <span data-i18n="fDate">체결일</span>
                   <input name="date" type="date" required autocomplete="off">
                   <span class="field-error" id="e-date"></span>
                 </label>
                 <label class="field">
-                  <span>종목 (티커)</span>
+                  <span data-i18n="fTicker">종목 (티커)</span>
                   <input name="ticker" type="text" maxlength="12" placeholder="AAPL" autocomplete="off" autocapitalize="characters" spellcheck="false">
                   <span class="field-error" id="e-ticker"></span>
                 </label>
                 <label class="field">
-                  <span>구분</span>
+                  <span data-i18n="fSide">구분</span>
                   <select name="side">
-                    <option value="BUY">매수</option>
-                    <option value="SELL">매도</option>
+                    <option value="BUY" data-i18n="sideBuy">매수</option>
+                    <option value="SELL" data-i18n="sideSell">매도</option>
                   </select>
                   <span class="field-error" id="e-side"></span>
                 </label>
                 <label class="field">
-                  <span>수량 (소수점 가능)</span>
+                  <span data-i18n="fQty">수량 (소수점 가능)</span>
                   <input name="qty" type="text" inputmode="decimal" placeholder="1.5" autocomplete="off">
                   <span class="field-error" id="e-qty"></span>
                 </label>
                 <label class="field">
-                  <span>단가 (USD)</span>
+                  <span data-i18n="fPrice">단가 (USD)</span>
                   <input name="price" type="text" inputmode="decimal" placeholder="185.20" autocomplete="off">
                   <span class="field-error" id="e-price"></span>
                 </label>
                 <label class="field">
-                  <span>수수료 (USD)</span>
+                  <span data-i18n="fFee">수수료 (USD)</span>
                   <input name="fee" type="text" inputmode="decimal" placeholder="0" autocomplete="off">
                   <span class="field-error" id="e-fee"></span>
                 </label>
                 <label class="field">
-                  <span>계좌</span>
-                  <input name="account" type="text" maxlength="20" list="account-options" placeholder="비우면 기본 계좌" autocomplete="off">
-                  <span class="hint">증권사·계좌마다 이름을 다르게 두면 계좌별로 매도 수량을 확인합니다.</span>
+                  <span data-i18n="fAccount">계좌</span>
+                  <input name="account" type="text" maxlength="20" list="account-options" data-i18n-attr="placeholder=accountPh" placeholder="비우면 기본 계좌" autocomplete="off">
+                  <span class="hint" data-i18n="accountHint">증권사·계좌마다 이름을 다르게 두면 계좌별로 매도 수량을 확인합니다.</span>
                   <span class="field-error" id="e-account"></span>
                 </label>
                 <label class="field field-wide">
-                  <span>이 거래의 환율 (원/달러)</span>
+                  <span data-i18n="fFx">이 거래의 환율 (원/달러)</span>
                   <input name="fx" type="text" inputmode="decimal" placeholder="1350" autocomplete="off">
-                  <span class="hint">거래일 기준환율 등 쓰기로 한 기준으로 직접 입력하세요. 기본값은 마지막 입력값입니다.</span>
+                  <span class="hint" data-i18n="fxHint">거래일 기준환율 등 쓰기로 한 기준으로 직접 입력하세요. 기본값은 마지막 입력값입니다.</span>
                   <span class="field-error" id="e-fx"></span>
                 </label>
               </div>
               <p class="field-error form-error" id="trade-form-error" role="alert"></p>
               <div class="form-actions">
-                <button type="submit" class="btn btn-primary" id="trade-submit">거래 추가</button>
-                <button type="button" class="btn btn-ghost" id="trade-cancel" hidden>수정 취소</button>
+                <button type="submit" class="btn btn-primary" id="trade-submit" data-i18n="tradeAdd">거래 추가</button>
+                <button type="button" class="btn btn-ghost" id="trade-cancel" hidden data-i18n="tradeCancel">수정 취소</button>
               </div>
             </form>
 
             <div class="stack">
               <details class="card" id="csv-box">
-                <summary>CSV 붙여넣기 · 가져오기</summary>
-                <p class="hint">헤더가 있으면 열 이름으로 읽습니다. <code>체결일자, 종목코드, 매매구분, 체결수량, 체결단가(USD), 수수료, 적용환율, 계좌</code>처럼 증권사 내보내기 이름도 인식합니다. 헤더가 없으면 <code>날짜,종목,구분,수량,단가,수수료,환율</code> 순서로 읽습니다. 계좌 열이 없으면 아래 계좌 칸을 씁니다. 원화 단가 열은 거부합니다.</p>
+                <summary data-i18n="csvSummary">CSV 붙여넣기 · 가져오기</summary>
+                <p class="hint"><span data-i18n="csvHelp1">헤더가 있으면 열 이름으로 읽습니다.</span> <code data-i18n="csvHeaderEx">체결일자, 종목코드, 매매구분, 체결수량, 체결단가(USD), 수수료, 적용환율, 계좌</code><span data-i18n="csvHelp2">처럼 증권사 내보내기 이름도 인식합니다. 헤더가 없으면</span> <code>date,ticker,side,qty,price,fee,fx</code> <span data-i18n="csvHelp3">순서로 읽습니다. 계좌 열이 없으면 아래 계좌 칸을 씁니다. 원화 단가 열은 거부합니다.</span></p>
                 <label class="field">
-                  <span>CSV 파일 선택</span>
+                  <span data-i18n="csvFile">CSV 파일 선택</span>
                   <input type="file" id="csv-file" accept=".csv,text/csv,text/plain">
                 </label>
                 <label class="field">
-                  <span>이 파일의 계좌 (계좌 열이 없을 때)</span>
-                  <input id="csv-account" type="text" maxlength="20" list="account-options" placeholder="비우면 기본 계좌" autocomplete="off">
+                  <span data-i18n="csvAccount">이 파일의 계좌 (계좌 열이 없을 때)</span>
+                  <input id="csv-account" type="text" maxlength="20" list="account-options" data-i18n-attr="placeholder=accountPh" placeholder="비우면 기본 계좌" autocomplete="off">
                 </label>
                 <label class="field">
-                  <span>CSV 내용</span>
+                  <span data-i18n="csvText">CSV 내용</span>
                   <textarea id="csv-text" rows="6" spellcheck="false" placeholder="2026-01-05,AAPL,BUY,2.5,185.20,0.5,1342.10"></textarea>
                 </label>
                 <div class="form-actions">
-                  <button type="button" class="btn btn-primary" id="csv-import">가져오기</button>
-                  <button type="button" class="btn btn-ghost" id="csv-clear">내용 지우기</button>
+                  <button type="button" class="btn btn-primary" id="csv-import" data-i18n="csvImportBtn">가져오기</button>
+                  <button type="button" class="btn btn-ghost" id="csv-clear" data-i18n="csvClearBtn">내용 지우기</button>
                 </div>
                 <div id="csv-report" role="status" aria-live="polite"></div>
                 <details class="sample">
-                  <summary>예시 보기</summary>
+                  <summary data-i18n="csvExample">예시 보기</summary>
                   <pre>date,ticker,side,qty,price,fee,fx
 2026-01-05,AAPL,BUY,2.5,185.20,0.5,1342.10
 2026-03-10,AAPL,SELL,1,210.00,0.5,1355.40</pre>
@@ -289,12 +289,12 @@
               </details>
 
               <div class="card">
-                <h3>백업</h3>
-                <p class="hint">거래 데이터는 이 브라우저에만 있습니다. 기기를 바꾸기 전에 백업 파일을 받아 두세요.</p>
+                <h3 data-i18n="backupTitle">백업</h3>
+                <p class="hint" data-i18n="backupHint">거래 데이터는 이 브라우저에만 있습니다. 기기를 바꾸기 전에 백업 파일을 받아 두세요.</p>
                 <div class="form-actions">
-                  <button type="button" class="btn btn-ghost" id="backup-export">JSON 백업 받기</button>
-                  <label class="btn btn-ghost file-btn">JSON 백업 불러오기<input type="file" id="backup-import" accept="application/json,.json" hidden></label>
-                  <button type="button" class="btn btn-danger-ghost" id="clear-all">전체 삭제</button>
+                  <button type="button" class="btn btn-ghost" id="backup-export" data-i18n="backupExport">JSON 백업 받기</button>
+                  <label class="btn btn-ghost file-btn"><span data-i18n="backupImport">JSON 백업 불러오기</span><input type="file" id="backup-import" accept="application/json,.json" hidden></label>
+                  <button type="button" class="btn btn-danger-ghost" id="clear-all" data-i18n="clearAllBtn">전체 삭제</button>
                 </div>
                 <p class="field-error" id="backup-error" role="alert"></p>
               </div>
@@ -303,27 +303,27 @@
 
           <div class="card table-card">
             <div class="table-head">
-              <h3>거래 목록 <span class="count" id="trade-count"></span></h3>
+              <h3><span data-i18n="tradeListTitle">거래 목록</span> <span class="count" id="trade-count"></span></h3>
             </div>
             <div class="empty-state" id="trade-empty">
-              <p>아직 거래가 없습니다. 위 입력란에서 첫 거래를 추가하거나, 먼저 예시로 둘러볼 수 있습니다.</p>
-              <button type="button" class="btn btn-ghost" id="trade-empty-sample" data-load-sample>예시 데이터로 둘러보기</button>
+              <p data-i18n="tradeEmpty">아직 거래가 없습니다. 위 입력란에서 첫 거래를 추가하거나, 먼저 예시로 둘러볼 수 있습니다.</p>
+              <button type="button" class="btn btn-ghost" id="trade-empty-sample" data-load-sample data-i18n="sampleBtn">예시 데이터로 둘러보기</button>
             </div>
-            <div class="table-scroll" id="trade-table-wrap" tabindex="0" role="region" aria-label="거래 목록" hidden>
+            <div class="table-scroll" id="trade-table-wrap" tabindex="0" role="region" hidden data-i18n-attr="aria-label=tradeRegion">
               <table class="data" id="trade-table">
-                <caption class="sr-only">입력한 거래 목록 (가로로 밀어서 전체 열을 볼 수 있습니다)</caption>
+                <caption class="sr-only" data-i18n="tradeCaption">입력한 거래 목록 (가로로 밀어서 전체 열을 볼 수 있습니다)</caption>
                 <thead>
                   <tr>
-                    <th scope="col">체결일</th>
-                    <th scope="col">계좌</th>
-                    <th scope="col">종목</th>
-                    <th scope="col">구분</th>
-                    <th scope="col" class="num">수량</th>
-                    <th scope="col" class="num">단가($)</th>
-                    <th scope="col" class="num">수수료($)</th>
-                    <th scope="col" class="num">환율</th>
-                    <th scope="col" class="num">원화 금액</th>
-                    <th scope="col"><span class="sr-only">관리</span></th>
+                    <th scope="col" data-i18n="colDate">체결일</th>
+                    <th scope="col" data-i18n="colAccount">계좌</th>
+                    <th scope="col" data-i18n="colTicker">종목</th>
+                    <th scope="col" data-i18n="colSide">구분</th>
+                    <th scope="col" class="num" data-i18n="colQty">수량</th>
+                    <th scope="col" class="num" data-i18n="colPriceUsd">단가($)</th>
+                    <th scope="col" class="num" data-i18n="colFeeUsd">수수료($)</th>
+                    <th scope="col" class="num" data-i18n="colFx">환율</th>
+                    <th scope="col" class="num" data-i18n="colWon">원화 금액</th>
+                    <th scope="col"><span class="sr-only" data-i18n="colManage">관리</span></th>
                   </tr>
                 </thead>
                 <tbody id="trade-body"></tbody>
@@ -337,27 +337,27 @@
           <div class="toolbar">
             <div class="toolbar-group">
               <label class="field inline">
-                <span>귀속 연도</span>
+                <span data-i18n="taxYearLabel">귀속 연도</span>
                 <select id="year-select"></select>
               </label>
               <label class="field inline">
-                <span>계좌 보기</span>
+                <span data-i18n="viewLabel">계좌 보기</span>
                 <select id="year-view">
-                  <option value="combined">계좌 합산</option>
-                  <option value="split">계좌별 분리</option>
+                  <option value="combined" data-i18n="viewCombined">계좌 합산</option>
+                  <option value="split" data-i18n="viewSplit">계좌별 분리</option>
                 </select>
               </label>
             </div>
             <div class="form-actions">
-              <button type="button" class="btn btn-ghost" id="print-year">인쇄용 리포트</button>
-              <button type="button" class="btn btn-primary" id="export-year">신고용 CSV 받기</button>
+              <button type="button" class="btn btn-ghost" id="print-year" data-i18n="printBtn">인쇄용 리포트</button>
+              <button type="button" class="btn btn-primary" id="export-year" data-i18n="exportFilingBtn">신고용 CSV 받기</button>
             </div>
           </div>
 
           <fieldset class="card options">
-            <legend>계산 옵션 (결과에 바로 반영됩니다)</legend>
-            <label class="check"><input type="checkbox" id="opt-fee"> 수수료를 필요경비로 산입 <span class="hint">기본 산입. 세무 확인 필요</span></label>
-            <label class="check"><input type="checkbox" id="opt-sameday"> 같은 날 매수를 매도보다 먼저 처리 <span class="hint">체결 순서를 모르면 기본값 유지</span></label>
+            <legend data-i18n="optionsLegend">계산 옵션 (결과에 바로 반영됩니다)</legend>
+            <label class="check"><input type="checkbox" id="opt-fee"> <span data-i18n="optFee">수수료를 필요경비로 산입</span> <span class="hint" data-i18n="optFeeHint">기본 산입. 세무 확인 필요</span></label>
+            <label class="check"><input type="checkbox" id="opt-sameday"> <span data-i18n="optSameday">같은 날 매수를 매도보다 먼저 처리</span> <span class="hint" data-i18n="optSamedayHint">체결 순서를 모르면 기본값 유지</span></label>
             <p class="hint" id="fx-note"></p>
           </fieldset>
 
@@ -365,22 +365,22 @@
           <p class="hint" id="year-notes"></p>
 
           <div class="card">
-            <h3>연도별 비교</h3>
-            <p class="hint">연도마다 그 해 손익만 계산합니다. 연도 이름을 누르면 아래 매도 내역이 그 연도로 바뀝니다.</p>
-            <p class="empty" id="compare-empty">비교할 연도가 없습니다.</p>
-            <div class="table-scroll" id="compare-wrap" tabindex="0" role="region" aria-label="연도별 비교표" hidden>
+            <h3 data-i18n="compareTitle">연도별 비교</h3>
+            <p class="hint" data-i18n="compareHint">연도마다 그 해 손익만 계산합니다. 연도 이름을 누르면 아래 매도 내역이 그 연도로 바뀝니다.</p>
+            <p class="empty" id="compare-empty" data-i18n="compareEmpty">비교할 연도가 없습니다.</p>
+            <div class="table-scroll" id="compare-wrap" tabindex="0" role="region" hidden data-i18n-attr="aria-label=compareRegion">
               <table class="data">
-                <caption class="sr-only">연도별 양도소득 비교</caption>
+                <caption class="sr-only" data-i18n="compareCap">연도별 양도소득 비교</caption>
                 <thead>
                   <tr>
-                    <th scope="col">귀속 연도</th>
-                    <th scope="col" class="num">매도</th>
-                    <th scope="col" class="num">이익 합계</th>
-                    <th scope="col" class="num">차손 합계</th>
-                    <th scope="col" class="num">순손익</th>
-                    <th scope="col" class="num">과세표준</th>
-                    <th scope="col" class="num">예상 세액</th>
-                    <th scope="col" class="num">공제 여유</th>
+                    <th scope="col" data-i18n="colYear">귀속 연도</th>
+                    <th scope="col" class="num" data-i18n="colSales">매도</th>
+                    <th scope="col" class="num" data-i18n="colTotalGain">이익 합계</th>
+                    <th scope="col" class="num" data-i18n="colTotalLoss">차손 합계</th>
+                    <th scope="col" class="num" data-i18n="colNet">순손익</th>
+                    <th scope="col" class="num" data-i18n="colBase">과세표준</th>
+                    <th scope="col" class="num" data-i18n="colTax">예상 세액</th>
+                    <th scope="col" class="num" data-i18n="colHeadroom">공제 여유</th>
                   </tr>
                 </thead>
                 <tbody id="compare-body"></tbody>
@@ -389,19 +389,19 @@
           </div>
 
           <div class="card" id="account-split" hidden>
-            <h3>계좌별 손익</h3>
-            <p class="hint">계좌마다 따로 집계한 손익입니다. 기본공제는 사람 단위로 연 1회 적용하므로 세액은 계좌를 합산해서만 계산하고, 여기서는 나누지 않습니다 (확인 필요).</p>
-            <p class="empty" id="account-split-empty">이 연도에 매도 거래가 없습니다.</p>
-            <div class="table-scroll" id="account-split-wrap" tabindex="0" role="region" aria-label="계좌별 손익표" hidden>
+            <h3 data-i18n="splitTitle">계좌별 손익</h3>
+            <p class="hint" data-i18n="splitHint">계좌마다 따로 집계한 손익입니다. 기본공제는 사람 단위로 연 1회 적용하므로 세액은 계좌를 합산해서만 계산하고, 여기서는 나누지 않습니다 (확인 필요).</p>
+            <p class="empty" id="account-split-empty" data-i18n="noSalesThisYear">이 연도에 매도 거래가 없습니다.</p>
+            <div class="table-scroll" id="account-split-wrap" tabindex="0" role="region" hidden data-i18n-attr="aria-label=splitRegion">
               <table class="data">
-                <caption class="sr-only">계좌별 양도소득 손익</caption>
+                <caption class="sr-only" data-i18n="splitCap">계좌별 양도소득 손익</caption>
                 <thead>
                   <tr>
-                    <th scope="col">계좌</th>
-                    <th scope="col" class="num">매도</th>
-                    <th scope="col" class="num">이익 합계</th>
-                    <th scope="col" class="num">차손 합계</th>
-                    <th scope="col" class="num">순손익</th>
+                    <th scope="col" data-i18n="colAccount">계좌</th>
+                    <th scope="col" class="num" data-i18n="colSales">매도</th>
+                    <th scope="col" class="num" data-i18n="colTotalGain">이익 합계</th>
+                    <th scope="col" class="num" data-i18n="colTotalLoss">차손 합계</th>
+                    <th scope="col" class="num" data-i18n="colNet">순손익</th>
                   </tr>
                 </thead>
                 <tbody id="account-split-body"></tbody>
@@ -411,21 +411,21 @@
 
           <div class="card" id="ticker-card">
             <div class="card-head">
-              <h3>종목별 손익</h3>
-              <button type="button" class="btn btn-ghost" id="export-ticker">종목별 CSV 받기</button>
+              <h3 data-i18n="tickerTitle">종목별 손익</h3>
+              <button type="button" class="btn btn-ghost" id="export-ticker" data-i18n="exportTickerBtn">종목별 CSV 받기</button>
             </div>
-            <p class="hint">같은 종목을 여러 번 판 결과를 합친 손익입니다. 세액 계산에는 쓰지 않는 참고용 표이며, 손익 절댓값이 큰 순서입니다.</p>
-            <p class="empty" id="ticker-empty">이 연도에 매도 거래가 없습니다.</p>
-            <div class="table-scroll" id="ticker-wrap" tabindex="0" role="region" aria-label="종목별 손익표" hidden>
+            <p class="hint" data-i18n="tickerHint">같은 종목을 여러 번 판 결과를 합친 손익입니다. 세액 계산에는 쓰지 않는 참고용 표이며, 손익 절댓값이 큰 순서입니다.</p>
+            <p class="empty" id="ticker-empty" data-i18n="noSalesThisYear">이 연도에 매도 거래가 없습니다.</p>
+            <div class="table-scroll" id="ticker-wrap" tabindex="0" role="region" hidden data-i18n-attr="aria-label=tickerRegion">
               <table class="data">
-                <caption class="sr-only">종목별 양도소득 손익</caption>
+                <caption class="sr-only" data-i18n="tickerCap">종목별 양도소득 손익</caption>
                 <thead>
                   <tr>
-                    <th scope="col">종목</th>
-                    <th scope="col" class="num">매도</th>
-                    <th scope="col" class="num">이익 합계</th>
-                    <th scope="col" class="num">차손 합계</th>
-                    <th scope="col" class="num">순손익</th>
+                    <th scope="col" data-i18n="colTicker">종목</th>
+                    <th scope="col" class="num" data-i18n="colSales">매도</th>
+                    <th scope="col" class="num" data-i18n="colTotalGain">이익 합계</th>
+                    <th scope="col" class="num" data-i18n="colTotalLoss">차손 합계</th>
+                    <th scope="col" class="num" data-i18n="colNet">순손익</th>
                   </tr>
                 </thead>
                 <tbody id="ticker-body"></tbody>
@@ -434,10 +434,10 @@
           </div>
 
           <div class="card">
-            <h3>매도 건별 상세 <span class="count" id="sale-count"></span></h3>
+            <h3><span data-i18n="saleDetailTitle">매도 건별 상세</span> <span class="count" id="sale-count"></span></h3>
             <div class="empty-state" id="sale-empty">
-              <p>이 연도의 매도 거래가 없습니다.</p>
-              <button type="button" class="btn btn-ghost" id="sale-empty-sample" data-load-sample>예시 데이터로 둘러보기</button>
+              <p data-i18n="noSalesYear">이 연도의 매도 거래가 없습니다.</p>
+              <button type="button" class="btn btn-ghost" id="sale-empty-sample" data-load-sample data-i18n="sampleBtn">예시 데이터로 둘러보기</button>
             </div>
             <div id="sale-list"></div>
           </div>
@@ -446,16 +446,16 @@
         <!-- 시뮬레이터 -->
         <section class="panel" id="panel-sim" role="tabpanel" aria-labelledby="tab-btn-sim" hidden>
           <div class="card">
-            <h3>연말 절세 시뮬레이터 <span class="count" id="sim-year"></span></h3>
-            <p class="hint">보유 lot의 현재가(USD)를 입력하면 미실현 손익이 보입니다. 매도 수량을 넣으면 같은 선입선출 규칙으로 계산한 세금 차이를 보여 줍니다. 체결일은 오늘로 가정합니다.</p>
+            <h3><span data-i18n="simTitle">연말 절세 시뮬레이터</span> <span class="count" id="sim-year"></span></h3>
+            <p class="hint" data-i18n="simHintMain">보유 lot의 현재가(USD)를 입력하면 미실현 손익이 보입니다. 매도 수량을 넣으면 같은 선입선출 규칙으로 계산한 세금 차이를 보여 줍니다. 체결일은 오늘로 가정합니다.</p>
             <div class="field-grid sim-inputs">
               <label class="field">
-                <span>현재 환율 (원/달러)</span>
+                <span data-i18n="simFxLabel">현재 환율 (원/달러)</span>
                 <input id="sim-fx" type="text" inputmode="decimal" autocomplete="off">
                 <span class="field-error" id="e-simfx"></span>
               </label>
               <label class="field">
-                <span>예상 매도 수수료율 (%)</span>
+                <span data-i18n="simFeeLabel">예상 매도 수수료율 (%)</span>
                 <input id="sim-fee" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
                 <span class="field-error" id="e-simfee"></span>
               </label>
@@ -465,28 +465,28 @@
 
           <div class="card table-card">
             <div class="price-grid" id="sim-prices" hidden></div>
-            <div class="table-scroll" tabindex="0" role="region" aria-label="계좌별 보유 종목과 매도 수량">
+            <div class="table-scroll" tabindex="0" role="region" data-i18n-attr="aria-label=simTableRegion">
               <table class="data" id="sim-table">
-                <caption class="sr-only">계좌와 종목별 보유 수량, 원가, 미실현 손익, 매도 수량 입력</caption>
+                <caption class="sr-only" data-i18n="simTableCap">계좌와 종목별 보유 수량, 원가, 미실현 손익, 매도 수량 입력</caption>
                 <thead>
                   <tr>
-                    <th scope="col">계좌</th>
-                    <th scope="col">종목</th>
-                    <th scope="col" class="num">보유</th>
-                    <th scope="col" class="num">원가(원)</th>
-                    <th scope="col" class="num">미실현 손익</th>
-                    <th scope="col">매도 수량</th>
+                    <th scope="col" data-i18n="colAccount">계좌</th>
+                    <th scope="col" data-i18n="colTicker">종목</th>
+                    <th scope="col" class="num" data-i18n="colHeld">보유</th>
+                    <th scope="col" class="num" data-i18n="colCost">원가(원)</th>
+                    <th scope="col" class="num" data-i18n="colUnreal">미실현 손익</th>
+                    <th scope="col" data-i18n="colSellQty">매도 수량</th>
                   </tr>
                 </thead>
                 <tbody id="sim-body"></tbody>
               </table>
             </div>
-            <p class="empty" id="sim-empty">보유 중인 종목이 없습니다.</p>
+            <p class="empty" id="sim-empty" data-i18n="noHoldings">보유 중인 종목이 없습니다.</p>
             <div class="form-actions">
-              <button type="button" class="btn btn-primary" id="sim-suggest">공제 여유 활용 제안 채우기</button>
-              <button type="button" class="btn btn-ghost" id="sim-clear">매도 수량 비우기</button>
+              <button type="button" class="btn btn-primary" id="sim-suggest" data-i18n="suggestBtn">공제 여유 활용 제안 채우기</button>
+              <button type="button" class="btn btn-ghost" id="sim-clear" data-i18n="clearSellBtn">매도 수량 비우기</button>
             </div>
-            <p class="hint">제안은 공제 여유 안에서 이익 lot을 선입선출 순서로 파는 근사치입니다. 결과 카드의 세금은 정확한 계산입니다.</p>
+            <p class="hint" data-i18n="suggestHint">제안은 공제 여유 안에서 이익 lot을 선입선출 순서로 파는 근사치입니다. 결과 카드의 세금은 정확한 계산입니다.</p>
           </div>
 
           <div class="card" id="sim-result" role="status" aria-live="polite"></div>
@@ -497,16 +497,16 @@
           <div class="panel-grid">
             <div class="card dday" id="dday-card"></div>
             <div class="card">
-              <h3>신고 준비물 체크리스트</h3>
-              <p class="hint">체크 상태는 이 브라우저에만 저장됩니다.</p>
+              <h3 data-i18n="checklistTitle">신고 준비물 체크리스트</h3>
+              <p class="hint" data-i18n="checklistHint">체크 상태는 이 브라우저에만 저장됩니다.</p>
               <ul class="checklist" id="checklist"></ul>
             </div>
           </div>
           <div class="card">
-            <h3>신고용 CSV</h3>
+            <h3 data-i18n="filingCsvTitle">신고용 CSV</h3>
             <p class="hint" id="filing-csv-hint"></p>
             <div class="form-actions">
-              <button type="button" class="btn btn-primary" id="export-filing">신고용 CSV 받기</button>
+              <button type="button" class="btn btn-primary" id="export-filing" data-i18n="exportFilingBtn">신고용 CSV 받기</button>
             </div>
           </div>
         </section>
@@ -515,34 +515,34 @@
         <section class="panel" id="panel-ai" role="tabpanel" aria-labelledby="tab-btn-ai" hidden>
           <div class="panel-grid">
             <div class="card">
-              <h3>올해 상황 분석</h3>
-              <p class="hint">API 키는 선택 사항입니다. 키가 없으면 같은 형식의 규칙 기반 분석을 보여 줍니다.</p>
+              <h3 data-i18n="aiPanelTitle">올해 상황 분석</h3>
+              <p class="hint" data-i18n="aiOptional">API 키는 선택 사항입니다. 키가 없으면 같은 형식의 규칙 기반 분석을 보여 줍니다.</p>
               <div class="key-row">
                 <label class="field">
-                  <span>Anthropic API 키</span>
+                  <span data-i18n="aiKeyLabel">Anthropic API 키</span>
                   <input id="ai-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-...">
                   <span class="field-error" id="e-aikey"></span>
                 </label>
                 <div class="form-actions">
-                  <button type="button" class="btn btn-ghost" id="ai-key-save">키 저장</button>
-                  <button type="button" class="btn btn-danger-ghost" id="ai-key-remove">키 삭제</button>
+                  <button type="button" class="btn btn-ghost" id="ai-key-save" data-i18n="aiKeySave">키 저장</button>
+                  <button type="button" class="btn btn-danger-ghost" id="ai-key-remove" data-i18n="aiKeyRemove">키 삭제</button>
                 </div>
               </div>
-              <p class="warn">브라우저에 저장한 키는 개발자 도구에서 보일 수 있습니다. 공용 PC에서는 저장하지 마세요.</p>
+              <p class="warn" data-i18n="aiKeyWarn">브라우저에 저장한 키는 개발자 도구에서 보일 수 있습니다. 공용 PC에서는 저장하지 마세요.</p>
               <p class="hint" id="ai-key-state"></p>
             </div>
             <div class="card">
-              <h3>보내는 데이터</h3>
-              <p class="hint">연도 합계(총이익, 총손실, 순이익, 과세표준, 예상 세액, 공제 여유)와 종목별 보유 수량, 원가, 미실현 손익, 올해 실현 손익만 보냅니다. 날짜, 거래 ID, 계좌 정보는 보내지 않습니다.</p>
+              <h3 data-i18n="sendTitle">보내는 데이터</h3>
+              <p class="hint" data-i18n="sendHint">연도 합계(총이익, 총손실, 순이익, 과세표준, 예상 세액, 공제 여유)와 종목별 보유 수량, 원가, 미실현 손익, 올해 실현 손익만 보냅니다. 날짜, 거래 ID, 계좌 정보는 보내지 않습니다.</p>
               <pre class="preview" id="ai-preview" tabindex="0"></pre>
               <div class="form-actions">
-                <button type="button" class="btn btn-primary" id="ai-run">AI로 분석하기</button>
-                <button type="button" class="btn btn-ghost" id="ai-local">규칙 기반 분석 보기</button>
+                <button type="button" class="btn btn-primary" id="ai-run" data-i18n="aiRunBtn">AI로 분석하기</button>
+                <button type="button" class="btn btn-ghost" id="ai-local" data-i18n="aiLocalBtn">규칙 기반 분석 보기</button>
               </div>
             </div>
           </div>
           <div class="card ai-result" id="ai-result" role="status" aria-live="polite">
-            <p class="empty">분석 결과가 여기에 표시됩니다.</p>
+            <p class="empty" data-i18n="aiResultIdle">분석 결과가 여기에 표시됩니다.</p>
           </div>
         </section>
       </div>
@@ -550,32 +550,32 @@
 
     <section id="faq" class="section">
       <div class="wrap">
-        <p class="kicker">질문</p>
-        <h2>자주 묻는 질문</h2>
+        <p class="kicker" data-i18n="navFaq">질문</p>
+        <h2 data-i18n="faqTitle">자주 묻는 질문</h2>
         <div class="faq">
           <details>
-            <summary>손실은 다음 해로 넘어가나요?</summary>
-            <p>양도소득 결손금은 다음 해로 이월되지 않습니다. 이 계산기는 같은 해 안에서만 이익과 손실을 통산하고, 다른 해 손실은 반영하지 않습니다.</p>
+            <summary data-i18n="faq1Q">손실은 다음 해로 넘어가나요?</summary>
+            <p data-i18n="faq1A">양도소득 결손금은 다음 해로 이월되지 않습니다. 이 계산기는 같은 해 안에서만 이익과 손실을 통산하고, 다른 해 손실은 반영하지 않습니다.</p>
           </details>
           <details>
-            <summary>환율은 어떤 기준으로 넣나요?</summary>
-            <p>거래마다 직접 입력합니다. 거래일 기준환율과 결제일 기준환율 중 무엇을 쓸지는 세무 판단이 필요해서, 앱이 임의로 정하지 않습니다.</p>
+            <summary data-i18n="faq2Q">환율은 어떤 기준으로 넣나요?</summary>
+            <p data-i18n="faq2A">거래마다 직접 입력합니다. 거래일 기준환율과 결제일 기준환율 중 무엇을 쓸지는 세무 판단이 필요해서, 앱이 임의로 정하지 않습니다.</p>
           </details>
           <details>
-            <summary>수수료는 세금 계산에 반영되나요?</summary>
-            <p>기본으로 필요경비에 산입합니다. 옵션에서 끌 수 있고, 어느 쪽이 맞는지는 세무 확인이 필요합니다.</p>
+            <summary data-i18n="faq3Q">수수료는 세금 계산에 반영되나요?</summary>
+            <p data-i18n="faq3A">기본으로 필요경비에 산입합니다. 옵션에서 끌 수 있고, 어느 쪽이 맞는지는 세무 확인이 필요합니다.</p>
           </details>
           <details>
-            <summary>계좌가 여러 개면 어떻게 계산하나요?</summary>
-            <p>계좌마다 이름을 붙이면 같은 계좌 안에서만 선입선출로 매도 수량을 맞춥니다. 세액은 모든 계좌를 합산해 한 번만 계산하고, 기본공제도 사람 단위로 연 1회 적용합니다. 이 방식이 신고에 맞는지는 세무 확인이 필요합니다.</p>
+            <summary data-i18n="faq4Q">계좌가 여러 개면 어떻게 계산하나요?</summary>
+            <p data-i18n="faq4A">계좌마다 이름을 붙이면 같은 계좌 안에서만 선입선출로 매도 수량을 맞춥니다. 세액은 모든 계좌를 합산해 한 번만 계산하고, 기본공제도 사람 단위로 연 1회 적용합니다. 이 방식이 신고에 맞는지는 세무 확인이 필요합니다.</p>
           </details>
           <details>
-            <summary>데이터는 어디에 저장되나요?</summary>
-            <p>이 브라우저의 저장 공간에만 저장됩니다. 서버로 보내지 않으며, AI 분석을 누를 때만 집계 숫자가 전송됩니다. 기기를 바꾸면 JSON 백업으로 옮기세요.</p>
+            <summary data-i18n="faq5Q">데이터는 어디에 저장되나요?</summary>
+            <p data-i18n="faq5A">이 브라우저의 저장 공간에만 저장됩니다. 서버로 보내지 않으며, AI 분석을 누를 때만 집계 숫자가 전송됩니다. 기기를 바꾸면 JSON 백업으로 옮기세요.</p>
           </details>
           <details>
-            <summary>매도 수량이 보유보다 많다고 나와요.</summary>
-            <p>FIFO로 계산하므로 매수 기록이 빠져 있거나 체결일이 잘못되었을 가능성이 큽니다. 같은 날 매수와 매도는 기본적으로 매수를 먼저 처리합니다.</p>
+            <summary data-i18n="faq6Q">매도 수량이 보유보다 많다고 나와요.</summary>
+            <p data-i18n="faq6A">FIFO로 계산하므로 매수 기록이 빠져 있거나 체결일이 잘못되었을 가능성이 큽니다. 같은 날 매수와 매도는 기본적으로 매수를 먼저 처리합니다.</p>
           </details>
         </div>
       </div>
@@ -585,12 +585,12 @@
   <footer class="footer">
     <div class="wrap footer-inner">
       <div>
-        <p class="brand-line"><strong>gainlot</strong> · 해외주식 양도소득세 계산기</p>
-        <p class="hint">데이터는 이 브라우저에만 저장됩니다. 서버 저장과 계정 기능은 없습니다.</p>
+        <p class="brand-line"><strong>gainlot</strong> · <span data-i18n="footerName">해외주식 양도소득세 계산기</span></p>
+        <p class="hint" data-i18n="footerPrivacy">데이터는 이 브라우저에만 저장됩니다. 서버 저장과 계정 기능은 없습니다.</p>
       </div>
       <div class="hint">
-        <p>이 사이트의 계산 결과는 참고용이며 세무·법률·투자 자문이 아닙니다.</p>
-        <p>© 2026 gainlot. 세법 상수는 constants.js에서 확인할 수 있습니다.</p>
+        <p data-i18n="footerDisclaimer">이 사이트의 계산 결과는 참고용이며 세무·법률·투자 자문이 아닙니다.</p>
+        <p data-i18n="footerCopy">© 2026 gainlot. 세법 상수는 constants.js에서 확인할 수 있습니다.</p>
       </div>
     </div>
   </footer>

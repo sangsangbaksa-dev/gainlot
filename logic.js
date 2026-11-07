@@ -1,5 +1,7 @@
-// 순수 계산 로직 (DOM 없음). 화면은 app.js가 담당합니다.
+// 순수 계산 로직 (DOM 없음). 화면은 app.js가 담당합니다. 사용자에게 보이는 문구는 i18n.js의 t()로 만듭니다.
+// 신고용 CSV 열 이름과 가져오기 열 이름 목록은 국세청 양식·증권사 파일 형식이므로 한국어 원문을 유지합니다.
 import { TAX_CONSTANTS, DEFAULT_OPTIONS } from './constants.js';
+import { t as tl, fmtNumber } from './i18n.js';
 
 const EPS = 1e-9;
 const TICKER_RE = /^[A-Z0-9][A-Z0-9.\-^]{0,11}$/;
@@ -7,7 +9,8 @@ const NUM_RE = /^[+-]?(\d+(\.\d*)?|\.\d+)$/;
 const DAY_MS = 86400000;
 
 // 계좌 이름을 비워 두면 이 이름을 씁니다. 계좌 구분 이전에 저장된 거래도 이 계좌로 들어갑니다.
-export const DEFAULT_ACCOUNT = '기본 계좌';
+export const DEFAULT_ACCOUNT = '기본 계좌'; // 저장 값(한국어 원문). 화면에는 accountLabel()로 번역해 보입니다.
+export const accountLabel = (a) => (a === DEFAULT_ACCOUNT ? tl('defaultAccount') : a);
 const ACCOUNT_MAX = 20;
 
 // ---------- 공통 유틸 ----------
@@ -48,36 +51,36 @@ const lotKey = (account, ticker) => JSON.stringify([account, ticker]);
 // 문자열 또는 숫자를 받아 숫자로 바꿉니다. 빈 값은 allowEmpty 여부에 따라 처리합니다.
 export function parseNumber(raw, opts) {
   const { name, decimals, min, max, minExclusive = false, allowEmpty = false, example } = opts;
-  const hint = example ? ` (예: ${example})` : '';
+  const hint = example ? tl('exampleHint', { ex: example }) : '';
   let s;
   if (typeof raw === 'number') {
-    if (!Number.isFinite(raw)) return { ok: false, error: `${name}: 올바른 숫자가 아닙니다` };
+    if (!Number.isFinite(raw)) return { ok: false, error: tl('errNotNumber', { name }) };
     s = raw.toString();
-    if (/e/i.test(s)) return { ok: false, error: `${name}: 값이 너무 작거나 큽니다` };
+    if (/e/i.test(s)) return { ok: false, error: tl('errRange', { name }) };
   } else if (raw === null || raw === undefined) {
     s = '';
   } else if (typeof raw === 'string') {
     // 천 단위 쉼표, 공백, $, ₩, 원, USD 표기는 떼어 냅니다.
     s = raw.trim().replace(/[,\s$₩]|USD|원/gi, '');
   } else {
-    return { ok: false, error: `${name}: 올바른 형식이 아닙니다` };
+    return { ok: false, error: tl('errFormat', { name }) };
   }
   if (s === '') {
-    return allowEmpty ? { ok: true, value: 0 } : { ok: false, error: `${name}: 값을 입력하세요` };
+    return allowEmpty ? { ok: true, value: 0 } : { ok: false, error: tl('errEmpty', { name }) };
   }
-  if (!NUM_RE.test(s)) return { ok: false, error: `${name}: 숫자만 입력하세요${hint}` };
+  if (!NUM_RE.test(s)) return { ok: false, error: tl('errDigitsOnly', { name, hint }) };
   const dot = s.indexOf('.');
   const dec = dot === -1 ? 0 : s.length - dot - 1;
   if (decimals !== undefined && dec > decimals) {
-    return { ok: false, error: `${name}: 소수점 ${decimals}자리까지 입력할 수 있습니다` };
+    return { ok: false, error: tl('errDecimals', { name, n: decimals }) };
   }
   const value = Number(s);
-  if (!Number.isFinite(value)) return { ok: false, error: `${name}: 올바른 숫자가 아닙니다` };
+  if (!Number.isFinite(value)) return { ok: false, error: tl('errNotNumber', { name }) };
   if (minExclusive ? value <= min : value < min) {
-    return { ok: false, error: `${name}: ${minExclusive ? min + '보다 커야' : min + ' 이상이어야'} 합니다` };
+    return { ok: false, error: tl(minExclusive ? 'errMinExcl' : 'errMinIncl', { name, min }) };
   }
   if (max !== undefined && value > max) {
-    return { ok: false, error: `${name}: ${max.toLocaleString('ko-KR')} 이하로 입력하세요` };
+    return { ok: false, error: tl('errMax', { name, max: fmtNumber(max) }) };
   }
   return { ok: true, value };
 }
@@ -85,23 +88,23 @@ export function parseNumber(raw, opts) {
 // 날짜 문자열을 YYYY-MM-DD로 바꿉니다. 2026-02-30 같은 날짜는 거부합니다.
 // 시각이 붙은 값(2026-01-05 09:30)은 날짜 부분만 씁니다.
 export function parseDate(raw, today = isoToday()) {
-  if (typeof raw !== 'string' || raw.trim() === '') return { ok: false, error: '날짜: 값을 입력하세요' };
+  if (typeof raw !== 'string' || raw.trim() === '') return { ok: false, error: tl('dateEmpty') };
   let s = raw.trim();
   const withTime = /^(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})[ T]\d{1,2}:\d{2}/.exec(s);
   if (withTime) s = withTime[1];
   s = s.replace(/\s/g, '').replace(/\.$/, '');
   const m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(s) || /^(\d{4})(\d{2})(\d{2})$/.exec(s);
-  if (!m) return { ok: false, error: '날짜: YYYY-MM-DD 형식으로 입력하세요 (예: 2026-03-05)' };
+  if (!m) return { ok: false, error: tl('dateFormat') };
   const y = Number(m[1]);
   const mo = Number(m[2]);
   const d = Number(m[3]);
   const dt = new Date(Date.UTC(y, mo - 1, d));
   if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) {
-    return { ok: false, error: '날짜: 존재하지 않는 날짜입니다' };
+    return { ok: false, error: tl('dateInvalid') };
   }
   const iso = `${String(y).padStart(4, '0')}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-  if (iso < TAX_CONSTANTS.limits.minDate) return { ok: false, error: '날짜: 2000년 이후만 입력할 수 있습니다' };
-  if (iso > today) return { ok: false, error: '날짜: 오늘 이후 날짜는 입력할 수 없습니다' };
+  if (iso < TAX_CONSTANTS.limits.minDate) return { ok: false, error: tl('dateMin') };
+  if (iso > today) return { ok: false, error: tl('dateFuture') };
   return { ok: true, value: iso };
 }
 
@@ -110,17 +113,17 @@ export function parseSide(raw) {
   const s = String(raw ?? '').replace(/\s/g, '').toUpperCase();
   if (s === '매수' || s === 'BUY' || s === 'B') return { ok: true, value: 'BUY' };
   if (s === '매도' || s === 'SELL' || s === 'S') return { ok: true, value: 'SELL' };
-  if (/취소|정정/.test(s)) return { ok: false, error: '구분: 취소·정정 체결은 가져올 수 없습니다. 최종 체결만 넣으세요' };
+  if (/취소|정정/.test(s)) return { ok: false, error: tl('sideCancel') };
   const buy = /매수|BUY|구매/.test(s);
   const sell = /매도|SELL|판매/.test(s);
   if (buy !== sell) return { ok: true, value: buy ? 'BUY' : 'SELL' };
-  return { ok: false, error: '구분: 매수 또는 매도를 입력하세요' };
+  return { ok: false, error: tl('sideNeed') };
 }
 
 export function parseTicker(raw) {
   const s = String(raw ?? '').trim().toUpperCase();
-  if (s === '') return { ok: false, error: '종목: 티커를 입력하세요' };
-  if (!TICKER_RE.test(s)) return { ok: false, error: '종목: 영문 대문자, 숫자, 점(.), 하이픈(-)만 가능합니다 (최대 12자)' };
+  if (s === '') return { ok: false, error: tl('tickerEmpty') };
+  if (!TICKER_RE.test(s)) return { ok: false, error: tl('tickerFormat') };
   return { ok: true, value: s };
 }
 
@@ -128,7 +131,7 @@ export function parseTicker(raw) {
 export function parseAccount(raw) {
   const s = raw === undefined || raw === null ? '' : String(raw).replace(/[\u0000-\u001F\u007F]/g, '').trim();
   if (s === '') return { ok: true, value: DEFAULT_ACCOUNT };
-  if (s.length > ACCOUNT_MAX) return { ok: false, error: `계좌: ${ACCOUNT_MAX}자 이하로 입력하세요` };
+  if (s.length > ACCOUNT_MAX) return { ok: false, error: tl('accountMax', { max: ACCOUNT_MAX }) };
   return { ok: true, value: s };
 }
 
@@ -144,10 +147,10 @@ export function validateTrade(raw, { today = isoToday() } = {}) {
   const date = pick('date', parseDate(raw.date, today));
   const ticker = pick('ticker', parseTicker(raw.ticker));
   const side = pick('side', parseSide(raw.side));
-  const qty = pick('qty', parseNumber(raw.qty, { name: '수량', decimals: L.qtyDecimals, min: 0, minExclusive: true, max: L.maxQty, example: '2.5' }));
-  const price = pick('price', parseNumber(raw.price, { name: '단가(USD)', decimals: L.priceDecimals, min: 0, minExclusive: true, max: L.maxPriceUSD, example: '185.20' }));
-  const fee = pick('fee', parseNumber(raw.fee, { name: '수수료(USD)', decimals: L.feeDecimals, min: 0, max: L.maxFeeUSD, allowEmpty: true, example: '0.5' }));
-  const fx = pick('fx', parseNumber(raw.fx, { name: '환율(원/달러)', decimals: L.fxDecimals, min: L.minFxKRW, max: L.maxFxKRW, example: '1350.5' }));
+  const qty = pick('qty', parseNumber(raw.qty, { name: tl('fieldQty'), decimals: L.qtyDecimals, min: 0, minExclusive: true, max: L.maxQty, example: '2.5' }));
+  const price = pick('price', parseNumber(raw.price, { name: tl('fieldPrice'), decimals: L.priceDecimals, min: 0, minExclusive: true, max: L.maxPriceUSD, example: '185.20' }));
+  const fee = pick('fee', parseNumber(raw.fee, { name: tl('fieldFee'), decimals: L.feeDecimals, min: 0, max: L.maxFeeUSD, allowEmpty: true, example: '0.5' }));
+  const fx = pick('fx', parseNumber(raw.fx, { name: tl('fieldFx'), decimals: L.fxDecimals, min: L.minFxKRW, max: L.maxFxKRW, example: '1350.5' }));
   const account = pick('account', parseAccount(raw.account));
   if (errors.length) return { ok: false, errors };
   return { ok: true, errors: [], trade: { date, ticker, side, qty, price, fee, fx, account } };
@@ -203,7 +206,7 @@ export function computeLedger(trades, options = DEFAULT_OPTIONS) {
         date: t.date,
         ticker: t.ticker,
         account,
-        message: `${t.date} ${t.ticker} (${account}) 매도 ${t.qty}주가 이 계좌의 보유 ${roundQtyText(held)}주를 넘습니다. 매수 기록이 빠졌거나 체결일이 잘못되었을 수 있습니다.`,
+        message: tl('errOverSell', { date: t.date, ticker: t.ticker, account, qty: t.qty, held: roundQtyText(held) }),
       });
       continue;
     }
@@ -538,6 +541,7 @@ export const HEADER_ALIASES = Object.freeze({
   account: ['계좌', '계좌명', '계좌번호', '계좌구분', 'account', 'accountname'],
 });
 const FIELD_LABEL = { date: '날짜', ticker: '종목', side: '구분', qty: '수량', price: '단가', fee: '수수료', fx: '환율', account: '계좌' };
+const fieldLabel = (f) => tl('fl_' + f); // localized name of a CSV field (the header aliases above stay as they are)
 const REQUIRED_COLS = ['date', 'ticker', 'side', 'qty', 'price', 'fx'];
 const POSITIONAL = ['date', 'ticker', 'side', 'qty', 'price', 'fee', 'fx'];
 const MAX_CSV_ROWS = 5000;
@@ -614,7 +618,7 @@ function readHeader(fields) {
   columns.forEach((field, idx) => {
     if (field && !(field in mapping)) mapping[field] = fields[idx].trim();
   });
-  const missing = REQUIRED_COLS.filter((c) => !(c in mapping)).map((c) => `${FIELD_LABEL[c]}(${c})`);
+  const missing = REQUIRED_COLS.filter((c) => !(c in mapping)).map((c) => tl('fieldRef', { label: fieldLabel(c), c }));
   // 원화 금액 열은 USD 필드로 읽으면 세금이 틀어지므로 파일 단위로 막습니다.
   const krwCols = fields
     .map((h, idx) => ({ h: h.trim(), field: columns[idx] }))
@@ -628,9 +632,9 @@ function readHeader(fields) {
 export function parseTradeCsv(text, { today = isoToday(), account } = {}) {
   const delim = detectDelimiter(text);
   const records = splitCsv(text, delim);
-  if (records.length === 0) return { fatal: '가져올 내용이 없습니다. 파일이 비었거나 공백만 있습니다.', rows: [], mapping: null };
+  if (records.length === 0) return { fatal: tl('csvEmpty'), rows: [], mapping: null };
   const bad = records.find((r) => r.unterminated);
-  if (bad) return { fatal: `${bad.line}행: 따옴표가 닫히지 않았습니다. 큰따옴표(")의 짝을 맞춰 주세요.`, rows: [], mapping: null };
+  if (bad) return { fatal: tl('csvQuote', { line: bad.line }), rows: [], mapping: null };
 
   let columns;
   let mapping = null;
@@ -640,14 +644,14 @@ export function parseTradeCsv(text, { today = isoToday(), account } = {}) {
     if (head.krwCols.length) {
       const names = head.krwCols.map((x) => `"${x.h}"`).join(', ');
       return {
-        fatal: `${names} 열은 원화 금액으로 보입니다. 이 앱은 달러(USD) 단가와 수수료만 받습니다. 달러 열을 쓰거나 원화 열을 빼고 다시 가져오세요.`,
+        fatal: tl('csvKrwCols', { names }),
         rows: [], mapping: null,
       };
     }
     if (head.missing.length) {
-      const seen = Object.entries(head.mapping).map(([f, h]) => `${FIELD_LABEL[f]}←${h}`).join(', ');
+      const seen = Object.entries(head.mapping).map(([f, h]) => tl('seenPair', { label: fieldLabel(f), h })).join(', ');
       return {
-        fatal: `헤더에서 ${head.missing.join(', ')} 열을 찾지 못했습니다. 열 이름을 확인하세요 (예: 환율, 적용환율, 거래환율). 인식한 열: ${seen}`,
+        fatal: tl('csvMissingCols', { missing: head.missing.join(', '), seen }),
         rows: [], mapping: null,
       };
     }
@@ -659,7 +663,7 @@ export function parseTradeCsv(text, { today = isoToday(), account } = {}) {
     dataRecords = records;
   }
   if (dataRecords.length > MAX_CSV_ROWS) {
-    return { fatal: `한 번에 ${MAX_CSV_ROWS}행까지 가져올 수 있습니다. 파일을 나눠 주세요.`, rows: [], mapping: null };
+    return { fatal: tl('csvTooMany', { max: MAX_CSV_ROWS }), rows: [], mapping: null };
   }
 
   const rows = dataRecords.map((rec) => {
@@ -667,7 +671,7 @@ export function parseTradeCsv(text, { today = isoToday(), account } = {}) {
     if (f.length !== columns.length) {
       return {
         line: rec.line, ok: false, trade: null,
-        errors: [{ field: 'row', message: `열 개수가 ${columns.length}개여야 하는데 ${f.length}개입니다. 쉼표 개수와 따옴표를 확인하세요` }],
+        errors: [{ field: 'row', message: tl('csvColCount', { n: columns.length, got: f.length }) }],
       };
     }
     const raw = {};
@@ -679,7 +683,7 @@ export function parseTradeCsv(text, { today = isoToday(), account } = {}) {
     const res = validateTrade(raw, { today });
     return { line: rec.line, ok: res.ok, trade: res.ok ? res.trade : null, errors: res.errors };
   });
-  return { fatal: null, rows, mapping: mapping || Object.fromEntries(POSITIONAL.map((f) => [f, `(위치 ${POSITIONAL.indexOf(f) + 1}번째 열)`])) };
+  return { fatal: null, rows, mapping: mapping || Object.fromEntries(POSITIONAL.map((f) => [f, tl('positional', { n: POSITIONAL.indexOf(f) + 1 })])) };
 }
 
 function csvField(v) {
@@ -724,18 +728,18 @@ export function parseBackup(text, { today = isoToday() } = {}) {
   try {
     data = JSON.parse(text);
   } catch {
-    return { ok: false, errors: ['JSON 형식이 아닙니다. 이 앱에서 받은 백업 파일인지 확인하세요.'] };
+    return { ok: false, errors: [tl('backupNotJson')] };
   }
   if (!data || data.app !== 'gainlot' || data.schema !== 1 || !Array.isArray(data.trades)) {
-    return { ok: false, errors: ['gainlot 백업 파일(schema 1)이 아닙니다.'] };
+    return { ok: false, errors: [tl('backupNotGainlot')] };
   }
-  if (data.trades.length > 10000) return { ok: false, errors: ['거래가 10,000건을 넘습니다.'] };
+  if (data.trades.length > 10000) return { ok: false, errors: [tl('backupTooMany')] };
   const errors = [];
   const trades = [];
   data.trades.forEach((raw, idx) => {
     const res = validateTrade(raw && typeof raw === 'object' ? raw : {}, { today });
     if (!res.ok) {
-      errors.push(`${idx + 1}번째 거래: ${res.errors.map((e) => e.message).join(' / ')}`);
+      errors.push(tl('backupRow', { idx: idx + 1, msg: res.errors.map((e) => e.message).join(' / ') }));
       return;
     }
     trades.push({ id: typeof raw.id === 'string' && raw.id ? raw.id.slice(0, 64) : newId(), ...res.trade, seq: idx + 1 });
@@ -755,8 +759,8 @@ export function parseBackup(text, { today = isoToday() } = {}) {
 // 빈 화면에서 기능을 둘러볼 때 쓰는 가상의 거래입니다. 실제 시세나 환율이 아닙니다.
 // 두 계좌에 나눠 넣고, 2025년 매도도 포함해 연도 비교가 보이도록 했습니다.
 export function sampleTrades() {
-  const A = '예시 계좌 1';
-  const B = '예시 계좌 2';
+  const A = tl('sampleAcct1');
+  const B = tl('sampleAcct2');
   const rows = [
     ['2024-06-03', 'MSFT', 'BUY', 5, 410, 1, 1330, A],
     ['2025-03-10', 'MSFT', 'SELL', 5, 440, 1, 1450, A],

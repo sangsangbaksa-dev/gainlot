@@ -1,5 +1,5 @@
 /* gainlot: 색은 모두 토큰으로만 씁니다.
-   중립 바탕(무채색 계열) 위에 악센트 하나(인디고 #4F46E5)만 씁니다. 다크에서는 밝은 변형을 씁니다.
+   중립 바탕(무채색 계열) 위에 악센트 하나(인디고 #1F4E9A)만 씁니다. 다크에서는 밝은 변형을 씁니다.
    이익·손실 색과 경고 색은 의미를 전달하는 용도로만 씁니다. */
 :root {
   --bg: #FAFAF8;
@@ -7,10 +7,10 @@
   --surface-2: #F3F3F0;
   --text: #18181B;
   --muted: #55555E;
-  --accent: #4F46E5;
-  --accent-hover: #4338CA;
+  --accent: #1F4E9A;
+  --accent-hover: #173B78;
   --accent-ink: #FFFFFF;
-  --accent-soft: #EEEDFD;
+  --accent-soft: #E6EEF9;
   --border: #E4E4DF;
   --border-strong: #C9C9C2;
   --pos: #047857;
@@ -19,11 +19,11 @@
   --warn-bg: #FFF6E5;
   --danger-bg: #FEF3F2;
   --ok-bg: #ECFDF5;
-  --shadow: 0 1px 2px rgba(24, 24, 27, 0.05), 0 8px 24px rgba(24, 24, 27, 0.06);
+  --shadow: none;
   --logo-fg: #FFFFFF;
   --radius: 14px;
-  --serif: Georgia, 'Noto Serif KR', 'Nanum Myeongjo', Batang, 'Apple SD Gothic Neo', serif;
-  --sans: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  --serif: var(--sans);
+  --sans: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans CJK KR', 'Noto Sans CJK JP', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   color-scheme: light;
 }
 
@@ -34,10 +34,10 @@
     --surface-2: #1E2128;
     --text: #ECECEF;
     --muted: #A1A1AA;
-    --accent: #8B8CFA;
-    --accent-hover: #A5A6FB;
+    --accent: #9DB8EA;
+    --accent-hover: #B6CBF0;
     --accent-ink: #0E0F12;
-    --accent-soft: #1F1E3D;
+    --accent-soft: #1B2A44;
     --border: #2A2D36;
     --border-strong: #3A3E49;
     --pos: #34D399;
@@ -46,7 +46,7 @@
     --warn-bg: #2A2108;
     --danger-bg: #2A1315;
     --ok-bg: #0B2620;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+    --shadow: none;
     --logo-fg: #0E0F12;
     color-scheme: dark;
   }
@@ -58,10 +58,10 @@
   --surface-2: #1E2128;
   --text: #ECECEF;
   --muted: #A1A1AA;
-  --accent: #8B8CFA;
-  --accent-hover: #A5A6FB;
+  --accent: #9DB8EA;
+  --accent-hover: #B6CBF0;
   --accent-ink: #0E0F12;
-  --accent-soft: #1F1E3D;
+  --accent-soft: #1B2A44;
   --border: #2A2D36;
   --border-strong: #3A3E49;
   --pos: #34D399;
@@ -70,7 +70,7 @@
   --warn-bg: #2A2108;
   --danger-bg: #2A1315;
   --ok-bg: #0B2620;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow: none;
   --logo-fg: #0E0F12;
   color-scheme: dark;
 }
@@ -157,7 +157,7 @@ pre { background: var(--surface-2); border-radius: 0.75rem; padding: 0.75rem; ov
 .lede { font-size: clamp(1.02rem, 1.9vw, 1.14rem); color: var(--muted); max-width: 36rem; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 1.5rem 0 1.25rem; }
 .hero-points { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: 0.35rem; color: var(--text); font-size: 0.95rem; }
-.hero-points li::before { content: '\2713'; color: var(--accent); font-weight: 700; margin-right: 0.45rem; }
+.hero-points li::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 0.6rem; vertical-align: middle; }
 
 /* 제품 화면 목업 (실제 앱 화면을 옮긴 것, 숫자는 예시) */
 .shot { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
@@ -420,3 +420,12 @@ table.data tr.current th, table.data tr.current td { background: var(--accent-so
 /* 2차 정리: 체크박스와 건너뛰기 링크도 44px 탭 영역을 갖춤 */
 label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { min-height: 44px; display: inline-flex; align-items: center; gap: 0.5rem; }
 .skip, .skip-link, a.skip { min-height: 44px; display: inline-flex; align-items: center; }
+
+/* Language selector and top tools (added with the translations) */
+.top-tools { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+.lang-field { display: inline-flex; }
+.lang-field select { min-height: 44px; min-width: 7.5rem; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); color: var(--text); font: inherit; }
+@media (max-width: 640px) { .top-tools { margin-left: 0; } .topnav { margin-left: 0; } }
+/* CJK text breaks normally (keep-all would stop it wrapping); grid children may shrink below their content width */
+html:lang(ja) body, html:lang(zh) body { word-break: normal; overflow-wrap: anywhere; }
+.hero-grid > *, .panel-grid > *, .feature-row > *, .feature-copy, .shot, .card, .summary-grid > *, .field-grid > * { min-width: 0; }
