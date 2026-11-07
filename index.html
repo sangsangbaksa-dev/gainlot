@@ -409,6 +409,30 @@
             </div>
           </div>
 
+          <div class="card" id="ticker-card">
+            <div class="card-head">
+              <h3>종목별 손익</h3>
+              <button type="button" class="btn btn-ghost" id="export-ticker">종목별 CSV 받기</button>
+            </div>
+            <p class="hint">같은 종목을 여러 번 판 결과를 합친 손익입니다. 세액 계산에는 쓰지 않는 참고용 표이며, 손익 절댓값이 큰 순서입니다.</p>
+            <p class="empty" id="ticker-empty">이 연도에 매도 거래가 없습니다.</p>
+            <div class="table-scroll" id="ticker-wrap" tabindex="0" role="region" aria-label="종목별 손익표" hidden>
+              <table class="data">
+                <caption class="sr-only">종목별 양도소득 손익</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">종목</th>
+                    <th scope="col" class="num">매도</th>
+                    <th scope="col" class="num">이익 합계</th>
+                    <th scope="col" class="num">차손 합계</th>
+                    <th scope="col" class="num">순손익</th>
+                  </tr>
+                </thead>
+                <tbody id="ticker-body"></tbody>
+              </table>
+            </div>
+          </div>
+
           <div class="card">
             <h3>매도 건별 상세 <span class="count" id="sale-count"></span></h3>
             <div class="empty-state" id="sale-empty">

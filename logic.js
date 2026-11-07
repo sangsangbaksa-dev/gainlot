@@ -329,6 +329,33 @@ export function summarizeByAccount(sales, year) {
   return [...map.values()].sort((a, b) => a.account.localeCompare(b.account, 'ko'));
 }
 
+// 종목별 손익 집계. 같은 종목이라도 계좌가 다르면 계좌 합산 기준으로 한 줄입니다.
+// 정렬은 손익 절댓값이 큰 순서입니다. 세액 계산에는 쓰지 않는 참고용 표입니다.
+export function summarizeByTicker(sales, year) {
+  const map = new Map();
+  for (const s of sales) {
+    if (s.year !== year) continue;
+    const r = map.get(s.ticker) || { ticker: s.ticker, saleCount: 0, qty: 0, totalGain: 0, totalLoss: 0, net: 0 };
+    r.saleCount += 1;
+    r.qty += Number(s.qty) || 0;
+    if (s.gainKRW > 0) r.totalGain += s.gainKRW;
+    else if (s.gainKRW < 0) r.totalLoss += -s.gainKRW;
+    r.net = r.totalGain - r.totalLoss;
+    map.set(s.ticker, r);
+  }
+  return [...map.values()].sort((a, b) => Math.abs(b.net) - Math.abs(a.net) || a.ticker.localeCompare(b.ticker, 'ko'));
+}
+
+// 종목별 손익 CSV. salesToCsv와 같은 형식(BOM, CRLF)을 씁니다.
+export function tickerSummaryToCsv(rows) {
+  const header = ['종목', '매도 건수', '매도 수량', '이익 합계(원)', '차손 합계(원)', '순손익(원)'];
+  const lines = [header.join(',')];
+  for (const r of rows) {
+    lines.push([r.ticker, r.saleCount, roundQtyText(r.qty), r.totalGain, r.totalLoss, r.net].map(csvField).join(','));
+  }
+  return '\uFEFF' + lines.join('\r\n') + '\r\n';
+}
+
 // 연도별 비교표용 요약. 매도 목록은 빼고 숫자만 돌려줍니다.
 export function compareYears(sales, years, constants = TAX_CONSTANTS) {
   return years.map((y) => {

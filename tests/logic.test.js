@@ -5,6 +5,7 @@ import {
   summarizeYear, listYears, openPositions, simulateSales, suggestHeadroom,
   filingInfo, splitCsv, parseTradeCsv, salesToCsv, makeBackup, parseBackup,
   parseAccount, parseSide, accountsOf, summarizeByAccount, compareYears, sampleTrades, DEFAULT_ACCOUNT,
+  summarizeByTicker, tickerSummaryToCsv,
 } from '../logic.js';
 import { TAX_CONSTANTS, DEFAULT_OPTIONS } from '../constants.js';
 import { buildPrompt, buildRequest, parseReply, isPlausibleKey, ruleBasedAnalysis, buildPayload, sendToAnthropic } from '../ai.js';
@@ -662,6 +663,35 @@ describe('계좌 구분: 계좌별 FIFO와 분리 집계', () => {
     const total = summarizeYear(sales, 2026);
     assert.equal(total.net, 500000);
     assert.equal(total.tax, 0);
+  });
+
+  test('종목별 손익은 종목마다 한 줄이고 손익 절댓값 큰 순서로 정렬한다', () => {
+    const trades = [
+      B('2026-01-05', 'AAPL', 10, 100, 0, 1000),
+      S('2026-02-05', 'AAPL', 10, 200, 0, 1000),
+      B('2026-01-05', 'MSFT', 10, 100, 0, 1000),
+      S('2026-02-05', 'MSFT', 10, 50, 0, 1000),
+      B('2026-01-05', 'QQQ', 5, 100, 0, 1000),
+      S('2026-02-05', 'QQQ', 5, 110, 0, 1000),
+    ];
+    const { sales } = computeLedger(trades);
+    const rows = summarizeByTicker(sales, 2026);
+    assert.deepEqual(rows.map((r) => [r.ticker, r.saleCount, r.qty, r.totalGain, r.totalLoss, r.net]), [
+      ['AAPL', 1, 10, 1000000, 0, 1000000],
+      ['MSFT', 1, 10, 0, 500000, -500000],
+      ['QQQ', 1, 5, 50000, 0, 50000],
+    ]);
+    assert.deepEqual(summarizeByTicker(sales, 2025), []);
+  });
+
+  test('종목별 CSV는 BOM과 CRLF를 쓰고 쉼표가 든 값을 따옴표로 감싼다', () => {
+    const csv = tickerSummaryToCsv([{ ticker: 'A,B', saleCount: 2, qty: 3, totalGain: 10, totalLoss: 4, net: 6 }]);
+    assert.ok(csv.startsWith('\uFEFF종목,'));
+    assert.ok(csv.endsWith('\r\n'));
+    const lines = csv.slice(1).split('\r\n');
+    assert.equal(lines[0], '종목,매도 건수,매도 수량,이익 합계(원),차손 합계(원),순손익(원)');
+    assert.equal(lines[1], '"A,B",2,3,10,4,6');
+    assert.equal(lines.length, 3);
   });
 
   test('accountsOf는 기본 계좌를 포함해 중복 없이 가나다순으로 돌려준다', () => {

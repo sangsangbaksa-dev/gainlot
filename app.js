@@ -2,7 +2,7 @@
 // 사용자 데이터는 textContent로만 넣습니다 (innerHTML 사용 안 함).
 import { TAX_CONSTANTS, DEFAULT_OPTIONS, FX_BASIS_NOTE } from './constants.js';
 import {
-  newId, isoToday, parseNumber, validateTrade, computeLedger, summarizeYear, summarizeByAccount,
+  newId, isoToday, parseNumber, validateTrade, computeLedger, summarizeYear, summarizeByAccount, summarizeByTicker, tickerSummaryToCsv,
   compareYears, accountsOf, listYears, openPositions, simulateSales, suggestHeadroom, filingInfo,
   parseTradeCsv, salesToCsv, makeBackup, parseBackup, sampleTrades, DEFAULT_ACCOUNT,
 } from './logic.js';
@@ -572,6 +572,7 @@ function renderYear() {
 
   renderCompare(sales);
   renderAccountSplit(sales);
+  renderTicker(sales);
 
   $('sale-count').textContent = s.saleCount ? `${s.saleCount}건` : '';
   $('sale-empty').hidden = s.saleCount > 0;
@@ -610,6 +611,29 @@ function renderCompare(sales) {
 }
 
 // 계좌별 분리 보기: 손익만 나눕니다. 세액은 합산 한 번으로만 계산합니다.
+// 종목별 손익 표. 계좌 구분 없이 종목 하나에 한 줄입니다.
+function renderTicker(sales) {
+  const rows = summarizeByTicker(sales, state.year);
+  const body = $('ticker-body');
+  body.replaceChildren();
+  $('ticker-empty').hidden = rows.length > 0;
+  $('ticker-wrap').hidden = rows.length === 0;
+  $('export-ticker').disabled = rows.length === 0;
+  for (const r of rows) {
+    body.append(
+      el(
+        'tr',
+        {},
+        el('th', { scope: 'row', text: r.ticker }),
+        el('td', { class: 'num', text: `${r.saleCount}건` }),
+        el('td', { class: 'num', text: fmtWon(r.totalGain) }),
+        el('td', { class: 'num', text: fmtWon(r.totalLoss) }),
+        el('td', { class: 'num', text: fmtSigned(r.net) }),
+      ),
+    );
+  }
+}
+
 function renderAccountSplit(sales) {
   const split = state.yearView === 'split';
   const box = $('account-split');
@@ -779,6 +803,15 @@ function bindYear() {
       return;
     }
     download(`gainlot-${state.year}-매도내역.csv`, 'text/csv;charset=utf-8', salesToCsv(s.sales));
+  });
+  $('export-ticker').addEventListener('click', () => {
+    const { sales } = ledger();
+    const rows = summarizeByTicker(sales, state.year);
+    if (!rows.length) {
+      window.alert(`${state.year}년 매도 거래가 없어 내려받을 내용이 없습니다.`);
+      return;
+    }
+    download(`gainlot-${state.year}-종목별손익.csv`, 'text/csv;charset=utf-8', tickerSummaryToCsv(rows));
   });
   $('print-year').addEventListener('click', printYearReport);
 }
