@@ -4,6 +4,7 @@ import {
   roundWon, computeTax, parseNumber, parseDate, validateTrade, computeLedger,
   summarizeYear, listYears, openPositions, simulateSales, suggestHeadroom,
   filingInfo, splitCsv, parseTradeCsv, salesToCsv, makeBackup, parseBackup,
+  parseAccount, parseSide, accountsOf, summarizeByAccount, compareYears, sampleTrades, DEFAULT_ACCOUNT,
 } from '../logic.js';
 import { TAX_CONSTANTS, DEFAULT_OPTIONS } from '../constants.js';
 import { buildPrompt, buildRequest, parseReply, isPlausibleKey, ruleBasedAnalysis, buildPayload, sendToAnthropic } from '../ai.js';
@@ -598,5 +599,192 @@ describe('AI 네트워크 래퍼 (가짜 fetch)', () => {
     const r = await sendToAnthropic({ key: 'bad', payload, fetchImpl: async () => { called = true; return fakeRes(200, {}); } });
     assert.equal(r.ok, false);
     assert.equal(called, false);
+  });
+});
+
+describe('계좌 구분: 계좌별 FIFO와 분리 집계', () => {
+  const acc = (t, account) => ({ ...t, account });
+
+  test('계좌를 비우면 기본 계좌로 저장되고, 20자를 넘으면 거부한다', () => {
+    assert.equal(parseAccount('').value, DEFAULT_ACCOUNT);
+    assert.equal(parseAccount('  ').value, DEFAULT_ACCOUNT);
+    assert.equal(parseAccount(' 해외A ').value, '해외A');
+    assert.equal(parseAccount('가'.repeat(21)).ok, false);
+  });
+
+  test('한 계좌에서 판 주식은 다른 계좌에서 산 lot으로 맞출 수 없다', () => {
+    const trades = [
+      acc(B('2026-01-05', 'AAPL', 10, 100, 0, 1000), '계좌A'),
+      acc(S('2026-02-05', 'AAPL', 5, 120, 0, 1000), '계좌B'),
+    ];
+    const r = computeLedger(trades);
+    assert.equal(r.sales.length, 0);
+    assert.equal(r.errors.length, 1);
+    assert.match(r.errors[0].message, /계좌B/);
+  });
+
+  test('계좌마다 lot이 따로 남고, 매도 건에는 계좌가 붙는다', () => {
+    const trades = [
+      acc(B('2026-01-05', 'AAPL', 10, 100, 0, 1000), '계좌A'),
+      acc(B('2026-01-06', 'AAPL', 4, 200, 0, 1000), '계좌B'),
+      acc(S('2026-02-05', 'AAPL', 4, 150, 0, 1000), '계좌B'),
+    ];
+    const r = computeLedger(trades);
+    assert.equal(r.errors.length, 0);
+    assert.equal(r.sales[0].account, '계좌B');
+    assert.equal(r.sales[0].slices.length, 1);
+    assert.equal(r.sales[0].slices[0].qty, 4);
+    assert.equal(r.sales[0].slices[0].buyPriceUSD, 200);
+    // 계좌B의 lot은 전량 소진, 계좌A의 lot 10주는 그대로
+    assert.deepEqual(r.openLots.map((l) => [l.account, l.qty]), [['계좌A', 10]]);
+  });
+
+  test('계좌를 생략한 거래는 기본 계좌로 묶여 예전 동작과 같다', () => {
+    const r = computeLedger([B('2026-01-05', 'AAPL', 10, 100, 0, 1000), S('2026-02-05', 'AAPL', 10, 120, 0, 1000)]);
+    assert.equal(r.sales[0].account, DEFAULT_ACCOUNT);
+    assert.equal(r.errors.length, 0);
+  });
+
+  test('계좌별 보기는 계좌마다 손익을 나누고, 세금 계산은 합산 한 번으로만 한다', () => {
+    const trades = [
+      acc(B('2026-01-05', 'AAPL', 10, 100, 0, 1000), '계좌A'),
+      acc(S('2026-02-05', 'AAPL', 10, 200, 0, 1000), '계좌A'),
+      acc(B('2026-01-05', 'MSFT', 10, 100, 0, 1000), '계좌B'),
+      acc(S('2026-02-05', 'MSFT', 10, 50, 0, 1000), '계좌B'),
+    ];
+    const { sales } = computeLedger(trades);
+    const rows = summarizeByAccount(sales, 2026);
+    assert.deepEqual(rows.map((r) => [r.account, r.totalGain, r.totalLoss, r.net]), [
+      ['계좌A', 1000000, 0, 1000000],
+      ['계좌B', 0, 500000, -500000],
+    ]);
+    // 합산 기준: 이익 100만 - 손실 50만 = 순손익 50만, 공제 250만 안이므로 세액 0
+    const total = summarizeYear(sales, 2026);
+    assert.equal(total.net, 500000);
+    assert.equal(total.tax, 0);
+  });
+
+  test('accountsOf는 기본 계좌를 포함해 중복 없이 가나다순으로 돌려준다', () => {
+    const trades = [acc(B('2026-01-05', 'AAPL', 1, 100, 0, 1000), '나계좌'), acc(B('2026-01-05', 'MSFT', 1, 100, 0, 1000), '가계좌'), B('2026-01-05', 'QQQ', 1, 100, 0, 1000)];
+    assert.deepEqual(accountsOf(trades), [DEFAULT_ACCOUNT, '가계좌', '나계좌'].sort((a, b) => a.localeCompare(b, 'ko')));
+  });
+
+  test('연도 비교표는 연도별 숫자를 같은 규칙으로 계산한다 (이월 없음)', () => {
+    const trades = [
+      B('2024-01-02', 'AAPL', 10, 100, 0, 1000),
+      S('2025-03-01', 'AAPL', 10, 150, 0, 1000),
+      B('2025-04-01', 'MSFT', 10, 100, 0, 1000),
+      S('2026-03-01', 'MSFT', 10, 60, 0, 1000),
+    ];
+    const { sales } = computeLedger(trades);
+    const rows = compareYears(sales, [2025, 2026]);
+    assert.deepEqual(rows.map((r) => r.year), [2025, 2026]);
+    assert.equal(rows[0].net, 500000);
+    assert.equal(rows[0].taxableBase, 0);
+    assert.equal(rows[1].net, -400000);
+    assert.equal(rows[1].headroom, DED + 400000);
+    assert.equal(rows[1].tax, 0);
+    assert.equal('sales' in rows[0], false);
+  });
+
+  test('시뮬레이터: 계좌를 지정한 가상 매도는 그 계좌의 lot만 쓴다', () => {
+    const trades = [
+      acc(B('2026-01-05', 'AAPL', 10, 100, 0, 1000), '계좌A'),
+      acc(B('2026-01-06', 'AAPL', 10, 300, 0, 1000), '계좌B'),
+    ];
+    const r = simulateSales({ trades, sells: [{ account: '계좌B', ticker: 'AAPL', qty: 10, priceUSD: 310 }], year: 2026, today: '2026-11-06', fxNow: 1000 });
+    assert.equal(r.ok, true);
+    assert.equal(r.simulatedSales[0].slices[0].buyDate, '2026-01-06');
+    assert.equal(r.simulatedGainKRW, 100000);
+  });
+
+  test('openPositions는 계좌와 종목마다 한 줄씩 나눈다', () => {
+    const trades = [
+      acc(B('2026-01-05', 'AAPL', 10, 100, 0, 1000), '계좌A'),
+      acc(B('2026-01-06', 'AAPL', 5, 100, 0, 1000), '계좌B'),
+    ];
+    const rows = openPositions(computeLedger(trades).openLots, { AAPL: 120 }, 1000);
+    assert.deepEqual(rows.map((p) => [p.account, p.qty]), [['계좌A', 10], ['계좌B', 5]]);
+  });
+
+  test('공제 활용 제안은 계좌별 수량 목록을 함께 돌려준다', () => {
+    const trades = [acc(B('2026-01-01', 'AAPL', 10, 100, 0, 1000), '계좌A'), acc(B('2026-01-02', 'AAPL', 10, 100, 0, 1000), '계좌B')];
+    const r = suggestHeadroom({ trades, prices: { AAPL: 200 }, fxNow: 1000, year: 2026 });
+    // 계좌마다 이익 100만원짜리 lot 10주씩: 두 개 모두 공제 여유(250만) 안에 들어 20주 제안
+    assert.deepEqual(r.lots, [{ account: '계좌A', ticker: 'AAPL', qty: 10 }, { account: '계좌B', ticker: 'AAPL', qty: 10 }]);
+    assert.equal(r.quantities.AAPL, 20);
+  });
+
+  test('백업 왕복 후에도 계좌 이름이 유지된다', () => {
+    const trades = [acc(B('2026-01-05', 'AAPL', 1, 100, 0, 1000, 'x1'), '해외A')];
+    const r = parseBackup(makeBackup(trades), { today: '2026-11-06' });
+    assert.equal(r.ok, true);
+    assert.equal(r.trades[0].account, '해외A');
+  });
+
+  test('구분 표기 변형: 현금매수, 매도체결은 받고, 취소·정정은 거부한다', () => {
+    assert.equal(parseSide('현금매수').value, 'BUY');
+    assert.equal(parseSide('매도 체결').value, 'SELL');
+    assert.equal(parseSide('Buy').value, 'BUY');
+    assert.equal(parseSide('매수취소').ok, false);
+    assert.equal(parseSide('매수/매도').ok, false);
+  });
+});
+
+describe('CSV 열 별칭과 행별 오류', () => {
+  const TODAY = '2026-11-06';
+
+  test('증권사 내보내기 표기(체결일자, 매매구분, 체결수량, 적용환율)를 인식하고 계좌 열도 읽는다', () => {
+    const text = '체결일자,종목코드,매매구분,체결수량,체결단가(USD),수수료(USD),적용환율,계좌\n2026-01-05,aapl,현금매수,2,"$185.20",0.5,1342.1,해외A\n';
+    const r = parseTradeCsv(text, { today: TODAY });
+    assert.equal(r.fatal, null);
+    assert.equal(r.rows[0].ok, true);
+    assert.equal(r.rows[0].trade.side, 'BUY');
+    assert.equal(r.rows[0].trade.price, 185.2);
+    assert.equal(r.rows[0].trade.account, '해외A');
+    assert.equal(r.mapping.fx, '적용환율');
+  });
+
+  test('계좌 열이 없으면 가져오기 화면에서 고른 계좌를 쓴다', () => {
+    const r = parseTradeCsv('date,ticker,side,qty,price,fee,fx\n2026-01-05,AAPL,BUY,1,100,0,1350\n', { today: TODAY, account: '해외B' });
+    assert.equal(r.rows[0].trade.account, '해외B');
+  });
+
+  test('시각이 붙은 날짜와 "2026. 1. 5." 형식도 받는다', () => {
+    const r = parseTradeCsv('날짜,종목,구분,수량,단가,환율\n2026-01-05 09:30:00,AAPL,매수,1,100,1300\n2026. 1. 6.,AAPL,매수,1,100,1300\n', { today: TODAY });
+    assert.ok(r.rows.every((x) => x.ok), JSON.stringify(r.rows.map((x) => x.errors)));
+    assert.equal(r.rows[1].trade.date, '2026-01-06');
+  });
+
+  test('원화 단가 열은 파일 전체를 거부하고 이유를 알려준다', () => {
+    const r = parseTradeCsv('날짜,종목,구분,수량,단가(원),환율\n2026-01-05,AAPL,매수,1,130000,1300\n', { today: TODAY });
+    assert.ok(r.fatal);
+    assert.match(r.fatal, /원화/);
+    assert.deepEqual(r.rows, []);
+  });
+
+  test('환율 열이 없으면 누락된 열의 한글 이름과 영문 이름을 함께 알려준다', () => {
+    const r = parseTradeCsv('날짜,종목,구분,수량,단가\n2026-01-05,AAPL,매수,1,100\n', { today: TODAY });
+    assert.match(r.fatal, /환율\(fx\)/);
+    assert.match(r.fatal, /인식한 열/);
+  });
+
+  test('취소·정정 체결 행은 그 행만 건너뛰고 나머지는 가져온다', () => {
+    const r = parseTradeCsv('날짜,종목,구분,수량,단가,환율\n2026-01-05,AAPL,매수,1,100,1300\n2026-01-06,AAPL,매수취소,1,100,1300\n', { today: TODAY });
+    assert.deepEqual(r.rows.map((x) => x.ok), [true, false]);
+    assert.match(r.rows[1].errors[0].message, /취소/);
+  });
+});
+
+describe('예시 데이터', () => {
+  test('예시 거래는 검증을 모두 통과하고 보유 초과가 없으며 두 해의 매도를 포함한다', () => {
+    const raw = sampleTrades();
+    const trades = raw.map((t, i) => ({ id: `s${i}`, ...t, seq: i + 1 }));
+    const check = parseBackup(makeBackup(trades), { today: '2026-11-06' });
+    assert.equal(check.ok, true, JSON.stringify(check.errors));
+    const { sales, errors } = computeLedger(trades);
+    assert.deepEqual(errors, []);
+    assert.deepEqual([...new Set(sales.map((s) => s.year))].sort(), [2025, 2026]);
+    assert.equal(accountsOf(trades).length, 2);
   });
 });

@@ -6,6 +6,10 @@ const TICKER_RE = /^[A-Z0-9][A-Z0-9.\-^]{0,11}$/;
 const NUM_RE = /^[+-]?(\d+(\.\d*)?|\.\d+)$/;
 const DAY_MS = 86400000;
 
+// 계좌 이름을 비워 두면 이 이름을 씁니다. 계좌 구분 이전에 저장된 거래도 이 계좌로 들어갑니다.
+export const DEFAULT_ACCOUNT = '기본 계좌';
+const ACCOUNT_MAX = 20;
+
 // ---------- 공통 유틸 ----------
 
 // 원 단위 반올림 (0.5는 0에서 멀어지는 쪽). 부동소수 오차 1e-6원 허용.
@@ -30,17 +34,14 @@ export function isoToday(now = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
-function daysBetween(isoA, isoB) {
-  const a = Date.UTC(...isoA.split('-').map((v, i) => (i === 1 ? Number(v) - 1 : Number(v))));
-  const b = Date.UTC(...isoB.split('-').map((v, i) => (i === 1 ? Number(v) - 1 : Number(v))));
-  return Math.round((b - a) / DAY_MS);
-}
-
 // 세율 적용 (원 미만 절사). 부동소수 오차를 줄이려고 1e-6 단위에서 먼저 반올림합니다.
 export function computeTax(taxable, rate = TAX_CONSTANTS.totalRate) {
   if (!(taxable > 0)) return 0;
   return Math.floor(Math.round(taxable * rate * 1e6) / 1e6);
 }
+
+const accountOf = (t) => t.account || DEFAULT_ACCOUNT;
+const lotKey = (account, ticker) => JSON.stringify([account, ticker]);
 
 // ---------- 입력 검증 ----------
 
@@ -55,14 +56,15 @@ export function parseNumber(raw, opts) {
   } else if (raw === null || raw === undefined) {
     s = '';
   } else if (typeof raw === 'string') {
-    s = raw.trim().replace(/[,\s$]/g, '');
+    // 천 단위 쉼표, 공백, $, ₩, 원, USD 표기는 떼어 냅니다.
+    s = raw.trim().replace(/[,\s$₩]|USD|원/gi, '');
   } else {
     return { ok: false, error: `${name}: 올바른 형식이 아닙니다` };
   }
   if (s === '') {
     return allowEmpty ? { ok: true, value: 0 } : { ok: false, error: `${name}: 값을 입력하세요` };
   }
-  if (!NUM_RE.test(s)) return { ok: false, error: `${name}: 숫자만 입력하세요` };
+  if (!NUM_RE.test(s)) return { ok: false, error: `${name}: 숫자만 입력하세요 (예: 185.2)` };
   const dot = s.indexOf('.');
   const dec = dot === -1 ? 0 : s.length - dot - 1;
   if (decimals !== undefined && dec > decimals) {
@@ -80,11 +82,15 @@ export function parseNumber(raw, opts) {
 }
 
 // 날짜 문자열을 YYYY-MM-DD로 바꿉니다. 2026-02-30 같은 날짜는 거부합니다.
+// 시각이 붙은 값(2026-01-05 09:30)은 날짜 부분만 씁니다.
 export function parseDate(raw, today = isoToday()) {
   if (typeof raw !== 'string' || raw.trim() === '') return { ok: false, error: '날짜: 값을 입력하세요' };
-  const s = raw.trim();
-  let m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(s) || /^(\d{4})(\d{2})(\d{2})$/.exec(s);
-  if (!m) return { ok: false, error: '날짜: YYYY-MM-DD 형식으로 입력하세요' };
+  let s = raw.trim();
+  const withTime = /^(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})[ T]\d{1,2}:\d{2}/.exec(s);
+  if (withTime) s = withTime[1];
+  s = s.replace(/\s/g, '').replace(/\.$/, '');
+  const m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(s) || /^(\d{4})(\d{2})(\d{2})$/.exec(s);
+  if (!m) return { ok: false, error: '날짜: YYYY-MM-DD 형식으로 입력하세요 (예: 2026-03-05)' };
   const y = Number(m[1]);
   const mo = Number(m[2]);
   const d = Number(m[3]);
@@ -98,10 +104,15 @@ export function parseDate(raw, today = isoToday()) {
   return { ok: true, value: iso };
 }
 
+// 구분: 매수/매도 한글·영문 표기와 "현금매수", "매수체결" 같은 변형을 받습니다.
 export function parseSide(raw) {
-  const s = String(raw ?? '').trim().toUpperCase();
+  const s = String(raw ?? '').replace(/\s/g, '').toUpperCase();
   if (s === '매수' || s === 'BUY' || s === 'B') return { ok: true, value: 'BUY' };
   if (s === '매도' || s === 'SELL' || s === 'S') return { ok: true, value: 'SELL' };
+  if (/취소|정정/.test(s)) return { ok: false, error: '구분: 취소·정정 체결은 가져올 수 없습니다. 최종 체결만 넣으세요' };
+  const buy = /매수|BUY|구매/.test(s);
+  const sell = /매도|SELL|판매/.test(s);
+  if (buy !== sell) return { ok: true, value: buy ? 'BUY' : 'SELL' };
   return { ok: false, error: '구분: 매수 또는 매도를 입력하세요' };
 }
 
@@ -109,6 +120,14 @@ export function parseTicker(raw) {
   const s = String(raw ?? '').trim().toUpperCase();
   if (s === '') return { ok: false, error: '종목: 티커를 입력하세요' };
   if (!TICKER_RE.test(s)) return { ok: false, error: '종목: 영문 대문자, 숫자, 점(.), 하이픈(-)만 가능합니다 (최대 12자)' };
+  return { ok: true, value: s };
+}
+
+// 계좌: 비우면 기본 계좌. 제어문자를 지우고 20자까지 받습니다.
+export function parseAccount(raw) {
+  const s = raw === undefined || raw === null ? '' : String(raw).replace(/[\u0000-\u001F\u007F]/g, '').trim();
+  if (s === '') return { ok: true, value: DEFAULT_ACCOUNT };
+  if (s.length > ACCOUNT_MAX) return { ok: false, error: `계좌: ${ACCOUNT_MAX}자 이하로 입력하세요` };
   return { ok: true, value: s };
 }
 
@@ -128,8 +147,9 @@ export function validateTrade(raw, { today = isoToday() } = {}) {
   const price = pick('price', parseNumber(raw.price, { name: '단가(USD)', decimals: L.priceDecimals, min: 0, minExclusive: true, max: L.maxPriceUSD }));
   const fee = pick('fee', parseNumber(raw.fee, { name: '수수료(USD)', decimals: L.feeDecimals, min: 0, max: L.maxFeeUSD, allowEmpty: true }));
   const fx = pick('fx', parseNumber(raw.fx, { name: '환율(원/달러)', decimals: L.fxDecimals, min: L.minFxKRW, max: L.maxFxKRW }));
+  const account = pick('account', parseAccount(raw.account));
   if (errors.length) return { ok: false, errors };
-  return { ok: true, errors: [], trade: { date, ticker, side, qty, price, fee, fx } };
+  return { ok: true, errors: [], trade: { date, ticker, side, qty, price, fee, fx, account } };
 }
 
 // ---------- FIFO 원장 ----------
@@ -144,22 +164,26 @@ function sortTrades(trades, options) {
 }
 
 // 거래 목록으로 FIFO 매칭을 수행합니다.
+// lot은 계좌와 종목마다 따로 쌓입니다. 한 계좌에서 판 주식은 그 계좌에서 산 lot으로만 맞춥니다.
 // 반환: sales(매도 건별 집계), openLots(잔여 매수 lot), errors(보유 초과 등 오류)
 // 원화 금액은 계산 중에는 소수점을 유지하고, 매도 건 단위로 마지막에 1원 반올림합니다.
 export function computeLedger(trades, options = DEFAULT_OPTIONS) {
   const feeOn = options.feeAsExpense !== false;
   const sorted = sortTrades(trades, { ...DEFAULT_OPTIONS, ...options });
-  const lotsByTicker = new Map();
+  const lotsByKey = new Map();
   const sales = [];
   const errors = [];
 
   for (const t of sorted) {
-    const lots = lotsByTicker.get(t.ticker) || [];
-    if (!lotsByTicker.has(t.ticker)) lotsByTicker.set(t.ticker, lots);
+    const account = accountOf(t);
+    const key = lotKey(account, t.ticker);
+    const lots = lotsByKey.get(key) || [];
+    if (!lotsByKey.has(key)) lotsByKey.set(key, lots);
 
     if (t.side === 'BUY') {
       lots.push({
         buyId: t.id,
+        account,
         ticker: t.ticker,
         date: t.date,
         qty: t.qty,
@@ -177,7 +201,8 @@ export function computeLedger(trades, options = DEFAULT_OPTIONS) {
         tradeId: t.id,
         date: t.date,
         ticker: t.ticker,
-        message: `${t.date} ${t.ticker} 매도 ${t.qty}주가 보유 ${roundQtyText(held)}주를 초과합니다`,
+        account,
+        message: `${t.date} ${t.ticker} (${account}) 매도 ${t.qty}주가 이 계좌의 보유 ${roundQtyText(held)}주를 넘습니다. 매수 기록이 빠졌거나 체결일이 잘못되었을 수 있습니다.`,
       });
       continue;
     }
@@ -213,6 +238,7 @@ export function computeLedger(trades, options = DEFAULT_OPTIONS) {
       id: t.id,
       date: t.date,
       year: Number(t.date.slice(0, 4)),
+      account,
       ticker: t.ticker,
       qty: t.qty,
       priceUSD: t.price,
@@ -227,11 +253,12 @@ export function computeLedger(trades, options = DEFAULT_OPTIONS) {
   }
 
   const openLots = [];
-  for (const lots of lotsByTicker.values()) {
+  for (const lots of lotsByKey.values()) {
     for (const lot of lots) {
       if (lot.remaining <= EPS) continue;
       openLots.push({
         buyId: lot.buyId,
+        account: lot.account,
         ticker: lot.ticker,
         date: lot.date,
         qty: lot.remaining,
@@ -250,7 +277,13 @@ function roundQtyText(n) {
   return String(Math.round(n * 1e6) / 1e6);
 }
 
-// 귀속 연도별 집계. 이월 없음: 해당 연도 손익만 통산합니다.
+// 거래에 쓰인 계좌 이름 (가나다순, 중복 없음)
+export function accountsOf(trades) {
+  return [...new Set(trades.map(accountOf))].sort((a, b) => a.localeCompare(b, 'ko'));
+}
+
+// 귀속 연도별 집계. 공제와 세율은 사람 단위로 한 번만 적용하므로 계좌를 합친 값으로 계산합니다.
+// 이월 없음: 해당 연도 손익만 통산합니다.
 export function summarizeYear(sales, year, constants = TAX_CONSTANTS) {
   const list = sales.filter((s) => s.year === year);
   let totalGain = 0;
@@ -279,6 +312,30 @@ export function summarizeYear(sales, year, constants = TAX_CONSTANTS) {
   };
 }
 
+// 계좌별 손익 (분리 보기). 세액은 계산하지 않습니다. 공제는 사람 단위 연 1회라 합산으로만 계산합니다.
+export function summarizeByAccount(sales, year) {
+  const map = new Map();
+  for (const s of sales) {
+    if (s.year !== year) continue;
+    const account = s.account || DEFAULT_ACCOUNT;
+    const r = map.get(account) || { account, saleCount: 0, totalGain: 0, totalLoss: 0, net: 0 };
+    r.saleCount += 1;
+    if (s.gainKRW > 0) r.totalGain += s.gainKRW;
+    else if (s.gainKRW < 0) r.totalLoss += -s.gainKRW;
+    r.net = r.totalGain - r.totalLoss;
+    map.set(account, r);
+  }
+  return [...map.values()].sort((a, b) => a.account.localeCompare(b.account, 'ko'));
+}
+
+// 연도별 비교표용 요약. 매도 목록은 빼고 숫자만 돌려줍니다.
+export function compareYears(sales, years, constants = TAX_CONSTANTS) {
+  return years.map((y) => {
+    const { sales: _omit, ...row } = summarizeYear(sales, y, constants);
+    return row;
+  });
+}
+
 export function listYears(trades, options = DEFAULT_OPTIONS) {
   const { sales } = computeLedger(trades, options);
   const years = new Set(sales.map((s) => s.year));
@@ -287,24 +344,27 @@ export function listYears(trades, options = DEFAULT_OPTIONS) {
 
 // ---------- 시뮬레이터 ----------
 
-// 보유 lot 기준 미실현 손익 (매도 수수료 제외, 표시용)
+// 보유 lot 기준 미실현 손익 (매도 수수료 제외, 표시용). 계좌와 종목 단위로 나눕니다.
 export function openPositions(openLots, prices, fxNow, options = DEFAULT_OPTIONS) {
   const feeOn = options.feeAsExpense !== false;
   const map = new Map();
   for (const lot of openLots) {
-    const p = map.get(lot.ticker) || { ticker: lot.ticker, qty: 0, costKRW: 0, lots: [] };
+    const account = accountOf(lot);
+    const key = lotKey(account, lot.ticker);
+    const p = map.get(key) || { account, ticker: lot.ticker, qty: 0, costKRW: 0, lots: [] };
     p.qty += lot.qty;
     p.costKRW += lot.costKRW + (feeOn ? lot.buyFeeKRW : 0);
     p.lots.push(lot);
-    map.set(lot.ticker, p);
+    map.set(key, p);
   }
   return [...map.values()]
-    .sort((a, b) => (a.ticker < b.ticker ? -1 : 1))
+    .sort((a, b) => (a.ticker !== b.ticker ? (a.ticker < b.ticker ? -1 : 1) : a.account.localeCompare(b.account, 'ko')))
     .map((p) => {
       const priceUSD = prices[p.ticker];
       const hasPrice = typeof priceUSD === 'number' && priceUSD > 0 && Number.isFinite(fxNow) && fxNow > 0;
       const valueKRW = hasPrice ? p.qty * priceUSD * fxNow : null;
       return {
+        account: p.account,
         ticker: p.ticker,
         qty: p.qty,
         costKRW: p.costKRW,
@@ -317,7 +377,7 @@ export function openPositions(openLots, prices, fxNow, options = DEFAULT_OPTIONS
 }
 
 // 가상 매도를 같은 FIFO 규칙으로 실제 원장에 더해 세금 변화를 계산합니다.
-// sells: [{ticker, qty, priceUSD}], 체결일은 today로 가정합니다.
+// sells: [{account?, ticker, qty, priceUSD}] (account를 생략하면 기본 계좌), 체결일은 today로 가정합니다.
 export function simulateSales({ trades, sells, year, today = isoToday(), fxNow, feeRate = 0, options = DEFAULT_OPTIONS }) {
   const base = computeLedger(trades, options);
   if (base.errors.length) return { ok: false, errors: base.errors.map((e) => e.message) };
@@ -327,6 +387,7 @@ export function simulateSales({ trades, sells, year, today = isoToday(), fxNow, 
     .map((s, i) => ({
       id: `sim-${i}`,
       date: today,
+      account: s.account || DEFAULT_ACCOUNT,
       ticker: s.ticker,
       side: 'SELL',
       qty: s.qty,
@@ -352,13 +413,14 @@ export function simulateSales({ trades, sells, year, today = isoToday(), fxNow, 
 }
 
 // 남은 250만원 공제 한도 활용 제안 (근사치).
-// 각 종목을 FIFO 순서로 팔면서, 공제 여유 안에서 이익을 실현하는 수량을 계산합니다.
+// 계좌와 종목마다 FIFO 순서로 팔면서, 공제 여유 안에서 이익을 실현하는 수량을 계산합니다.
 // 손실 lot은 FIFO 순서상 어차피 먼저 소진되므로 포함하며, 그만큼 여유가 늘어납니다.
+// 반환: lots는 계좌·종목별 제안 수량, quantities는 종목별 합계(표시용).
 // 정확한 세금은 simulateSales로 다시 확인해야 합니다.
 export function suggestHeadroom({ trades, prices, fxNow, feeRate = 0, year, options = DEFAULT_OPTIONS }) {
   const feeOn = options.feeAsExpense !== false;
   const base = computeLedger(trades, options);
-  if (base.errors.length) return { headroomKRW: 0, quantities: {}, error: base.errors[0].message };
+  if (base.errors.length) return { headroomKRW: 0, quantities: {}, lots: [], error: base.errors[0].message };
   const current = summarizeYear(base.sales, year);
   let budget = current.headroom;
   const candidates = [];
@@ -372,11 +434,12 @@ export function suggestHeadroom({ trades, prices, fxNow, feeRate = 0, year, opti
         (feeOn ? lot.feePerShareUSD * lot.fxRate : 0);
       return { qty: lot.qty, perShare };
     });
-    candidates.push({ ticker: pos.ticker, lots, first: lots[0].perShare });
+    candidates.push({ account: pos.account, ticker: pos.ticker, lots, first: lots[0].perShare });
   }
   candidates.sort((a, b) => a.first - b.first);
 
   const quantities = {};
+  const lots = [];
   for (const c of candidates) {
     let sold = 0;
     for (const lot of c.lots) {
@@ -398,12 +461,22 @@ export function suggestHeadroom({ trades, prices, fxNow, feeRate = 0, year, opti
       }
       break;
     }
-    if (sold > 0) quantities[c.ticker] = Math.round(sold * 1e6) / 1e6;
+    if (sold > 0) {
+      const qty = Math.round(sold * 1e6) / 1e6;
+      lots.push({ account: c.account, ticker: c.ticker, qty });
+      quantities[c.ticker] = Math.round(((quantities[c.ticker] || 0) + qty) * 1e6) / 1e6;
+    }
   }
-  return { headroomKRW: current.headroom, quantities, error: null };
+  return { headroomKRW: current.headroom, quantities, lots, error: null };
 }
 
 // ---------- 신고 기간 ----------
+
+function daysBetween(isoA, isoB) {
+  const a = Date.UTC(...isoA.split('-').map((v, i) => (i === 1 ? Number(v) - 1 : Number(v))));
+  const b = Date.UTC(...isoB.split('-').map((v, i) => (i === 1 ? Number(v) - 1 : Number(v))));
+  return Math.round((b - a) / DAY_MS);
+}
 
 export function filingInfo(todayIso = isoToday(), constants = TAX_CONSTANTS) {
   const y = Number(todayIso.slice(0, 4));
@@ -424,18 +497,35 @@ export function filingInfo(todayIso = isoToday(), constants = TAX_CONSTANTS) {
 
 // ---------- CSV ----------
 
-const HEADER_MAP = {
-  date: 'date', 날짜: 'date', 체결일: 'date', 거래일: 'date',
-  ticker: 'ticker', symbol: 'ticker', 종목: 'ticker', 종목코드: 'ticker',
-  side: 'side', type: 'side', 구분: 'side', 매수매도: 'side',
-  qty: 'qty', quantity: 'qty', 수량: 'qty',
-  price: 'price', 단가: 'price', 가격: 'price',
-  fee: 'fee', 수수료: 'fee',
-  fx: 'fx', fxrate: 'fx', 환율: 'fx',
-};
+// 증권사별 열 이름을 모두 맞출 수는 없으므로, 흔한 표기를 필드별로 모아 둡니다.
+// 비교 전에 공백, 밑줄, 하이픈, 괄호 안 단위(예: "단가(USD)")를 지웁니다.
+export const HEADER_ALIASES = Object.freeze({
+  date: ['날짜', '일자', '체결일', '체결일자', '체결날짜', '거래일', '거래일자', '주문일', '주문일자', '결제일', '매매일', '매매일자', 'date', 'tradedate', 'executeddate', 'orderdate'],
+  ticker: ['종목', '종목코드', '티커', '심볼', '상품코드', '종목티커', 'ticker', 'symbol', 'code', 'stock'],
+  side: ['구분', '매매구분', '거래구분', '체결구분', '주문구분', '매수매도', '매매', '종류', 'side', 'type', 'action'],
+  qty: ['수량', '체결수량', '주문수량', '거래수량', '매매수량', 'qty', 'quantity', 'shares'],
+  price: ['단가', '체결단가', '거래단가', '매매단가', '체결가', '체결가격', '가격', 'price', 'unitprice'],
+  fee: ['수수료', '수수료합계', '제비용', 'fee', 'commission'],
+  fx: ['환율', '적용환율', '거래환율', '체결환율', '기준환율', '매매기준율', '원화환율', 'fx', 'fxrate', 'exchangerate'],
+  account: ['계좌', '계좌명', '계좌번호', '계좌구분', 'account', 'accountname'],
+});
+const FIELD_LABEL = { date: '날짜', ticker: '종목', side: '구분', qty: '수량', price: '단가', fee: '수수료', fx: '환율', account: '계좌' };
 const REQUIRED_COLS = ['date', 'ticker', 'side', 'qty', 'price', 'fx'];
 const POSITIONAL = ['date', 'ticker', 'side', 'qty', 'price', 'fee', 'fx'];
 const MAX_CSV_ROWS = 5000;
+
+const ALIAS_TO_FIELD = new Map();
+for (const [field, names] of Object.entries(HEADER_ALIASES)) {
+  for (const n of names) ALIAS_TO_FIELD.set(normalizeHeader(n), field);
+}
+
+export function normalizeHeader(raw) {
+  return String(raw ?? '')
+    .normalize('NFC')
+    .replace(/\(.*?\)|\[.*?\]|（.*?）/g, '')
+    .replace(/[\s_\-/]/g, '')
+    .toLowerCase();
+}
 
 // 따옴표를 지원하는 CSV 분해기. 빈 줄은 제외하고 각 레코드의 시작 줄 번호를 기록합니다.
 export function splitCsv(text, delim = ',') {
@@ -489,45 +579,79 @@ function detectDelimiter(text) {
   return tabs > commas ? '\t' : ',';
 }
 
+// 헤더 행을 해석합니다. 필수 열이 없으면 missing에 한글 이름을 담습니다.
+function readHeader(fields) {
+  const columns = fields.map((h) => ALIAS_TO_FIELD.get(normalizeHeader(h)));
+  const mapping = {};
+  columns.forEach((field, idx) => {
+    if (field && !(field in mapping)) mapping[field] = fields[idx].trim();
+  });
+  const missing = REQUIRED_COLS.filter((c) => !(c in mapping)).map((c) => `${FIELD_LABEL[c]}(${c})`);
+  // 원화 금액 열은 USD 필드로 읽으면 세금이 틀어지므로 파일 단위로 막습니다.
+  const krwCols = fields
+    .map((h, idx) => ({ h: h.trim(), field: columns[idx] }))
+    .filter((x) => (x.field === 'price' || x.field === 'fee') && /\(원\)|₩|원\)?$/.test(x.h));
+  return { columns, mapping, missing, krwCols };
+}
+
 // CSV 가져오기. 행마다 검증 결과를 돌려주고, 파일 전체가 잘못되면 fatal 메시지를 줍니다.
 // 헤더가 있으면 열 이름으로, 없으면 date,ticker,side,qty,price,fee,fx 순서로 읽습니다.
-export function parseTradeCsv(text, { today = isoToday() } = {}) {
+// options.account: 계좌 열이 없거나 비어 있을 때 쓸 계좌 이름.
+export function parseTradeCsv(text, { today = isoToday(), account } = {}) {
   const delim = detectDelimiter(text);
   const records = splitCsv(text, delim);
-  if (records.length === 0) return { fatal: '가져올 내용이 없습니다.', rows: [] };
+  if (records.length === 0) return { fatal: '가져올 내용이 없습니다. 파일이 비었거나 공백만 있습니다.', rows: [], mapping: null };
   const bad = records.find((r) => r.unterminated);
-  if (bad) return { fatal: `${bad.line}행: 따옴표가 닫히지 않았습니다.`, rows: [] };
+  if (bad) return { fatal: `${bad.line}행: 따옴표가 닫히지 않았습니다. 큰따옴표(")의 짝을 맞춰 주세요.`, rows: [], mapping: null };
 
   let columns;
+  let mapping = null;
   let dataRecords;
-  const first = records[0].fields.map((f) => HEADER_MAP[f.trim().toLowerCase().replace(/[\s_]/g, '')]);
-  const recognized = new Set(first.filter(Boolean));
-  if (recognized.has('date') && recognized.has('ticker')) {
-    const missing = REQUIRED_COLS.filter((c) => !recognized.has(c));
-    if (missing.length) return { fatal: `헤더에 다음 열이 필요합니다: ${missing.join(', ')}`, rows: [] };
-    columns = first;
+  const head = readHeader(records[0].fields);
+  if (head.columns.includes('date') && head.columns.includes('ticker')) {
+    if (head.krwCols.length) {
+      const names = head.krwCols.map((x) => `"${x.h}"`).join(', ');
+      return {
+        fatal: `${names} 열은 원화 금액으로 보입니다. 이 앱은 달러(USD) 단가와 수수료만 받습니다. 달러 열을 쓰거나 원화 열을 빼고 다시 가져오세요.`,
+        rows: [], mapping: null,
+      };
+    }
+    if (head.missing.length) {
+      const seen = Object.entries(head.mapping).map(([f, h]) => `${FIELD_LABEL[f]}←${h}`).join(', ');
+      return {
+        fatal: `헤더에서 ${head.missing.join(', ')} 열을 찾지 못했습니다. 열 이름을 확인하세요 (예: 환율, 적용환율, 거래환율). 인식한 열: ${seen}`,
+        rows: [], mapping: null,
+      };
+    }
+    columns = head.columns;
+    mapping = head.mapping;
     dataRecords = records.slice(1);
   } else {
     columns = POSITIONAL;
     dataRecords = records;
   }
   if (dataRecords.length > MAX_CSV_ROWS) {
-    return { fatal: `한 번에 ${MAX_CSV_ROWS}행까지 가져올 수 있습니다.`, rows: [] };
+    return { fatal: `한 번에 ${MAX_CSV_ROWS}행까지 가져올 수 있습니다. 파일을 나눠 주세요.`, rows: [], mapping: null };
   }
 
   const rows = dataRecords.map((rec) => {
     const f = rec.fields;
     if (f.length !== columns.length) {
-      return { line: rec.line, ok: false, trade: null, errors: [{ field: 'row', message: `열 개수가 ${columns.length}개여야 하는데 ${f.length}개입니다` }] };
+      return {
+        line: rec.line, ok: false, trade: null,
+        errors: [{ field: 'row', message: `열 개수가 ${columns.length}개여야 하는데 ${f.length}개입니다. 쉼표 개수와 따옴표를 확인하세요` }],
+      };
     }
     const raw = {};
     columns.forEach((name, idx) => {
       if (name) raw[name] = f[idx];
     });
+    if (!mapping || !('account' in mapping)) raw.account = account;
+    else if (!String(raw.account ?? '').trim()) raw.account = account;
     const res = validateTrade(raw, { today });
     return { line: rec.line, ok: res.ok, trade: res.ok ? res.trade : null, errors: res.errors };
   });
-  return { fatal: null, rows };
+  return { fatal: null, rows, mapping: mapping || Object.fromEntries(POSITIONAL.map((f) => [f, `(위치 ${POSITIONAL.indexOf(f) + 1}번째 열)`])) };
 }
 
 function csvField(v) {
@@ -536,6 +660,7 @@ function csvField(v) {
 }
 
 // 신고용 요약 CSV: 매도 건별 한 행. Excel에서 한글이 깨지지 않도록 BOM을 붙입니다.
+// 열 구성은 기존 신고용 형식과 같게 유지합니다 (계좌는 화면의 계좌별 보기에서 확인).
 export function salesToCsv(sales) {
   const header = ['매도일', '종목', '수량', '양도가액(원)', '취득가액(원)', '필요경비(원)', '양도차익(원)'];
   const lines = [header.join(',')];
@@ -556,7 +681,10 @@ export function makeBackup(trades, options = DEFAULT_OPTIONS, now = new Date()) 
       schema: 1,
       exportedAt: now.toISOString(),
       options: { feeAsExpense: options.feeAsExpense !== false, sameDayBuyFirst: options.sameDayBuyFirst !== false },
-      trades: trades.map((t) => ({ id: t.id, date: t.date, ticker: t.ticker, side: t.side, qty: t.qty, price: t.price, fee: t.fee, fx: t.fx })),
+      trades: trades.map((t) => ({
+        id: t.id, date: t.date, account: accountOf(t), ticker: t.ticker, side: t.side,
+        qty: t.qty, price: t.price, fee: t.fee, fx: t.fx,
+      })),
     },
     null,
     2,
@@ -568,7 +696,7 @@ export function parseBackup(text, { today = isoToday() } = {}) {
   try {
     data = JSON.parse(text);
   } catch {
-    return { ok: false, errors: ['JSON 형식이 아닙니다.'] };
+    return { ok: false, errors: ['JSON 형식이 아닙니다. 이 앱에서 받은 백업 파일인지 확인하세요.'] };
   }
   if (!data || data.app !== 'gainlot' || data.schema !== 1 || !Array.isArray(data.trades)) {
     return { ok: false, errors: ['gainlot 백업 파일(schema 1)이 아닙니다.'] };
@@ -592,4 +720,23 @@ export function parseBackup(text, { today = isoToday() } = {}) {
   const check = computeLedger(trades, options);
   if (check.errors.length) return { ok: false, errors: check.errors.map((e) => e.message).slice(0, 20) };
   return { ok: true, errors: [], trades, options };
+}
+
+// ---------- 예시 데이터 ----------
+
+// 빈 화면에서 기능을 둘러볼 때 쓰는 가상의 거래입니다. 실제 시세나 환율이 아닙니다.
+// 두 계좌에 나눠 넣고, 2025년 매도도 포함해 연도 비교가 보이도록 했습니다.
+export function sampleTrades() {
+  const A = '예시 계좌 1';
+  const B = '예시 계좌 2';
+  const rows = [
+    ['2024-06-03', 'MSFT', 'BUY', 5, 410, 1, 1330, A],
+    ['2025-03-10', 'MSFT', 'SELL', 5, 440, 1, 1450, A],
+    ['2026-01-05', 'AAPL', 'BUY', 10, 185.2, 0.5, 1342.1, A],
+    ['2026-02-10', 'AAPL', 'BUY', 5, 190, 0.5, 1355, B],
+    ['2026-03-10', 'AAPL', 'SELL', 4, 210, 0.5, 1355.4, A],
+    ['2026-04-02', 'QQQ', 'BUY', 3, 480, 0.5, 1368, B],
+    ['2026-06-15', 'AAPL', 'SELL', 5, 175, 0.5, 1380, B],
+  ];
+  return rows.map(([date, ticker, side, qty, price, fee, fx, account]) => ({ date, ticker, side, qty, price, fee, fx, account }));
 }
