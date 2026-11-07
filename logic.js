@@ -47,7 +47,8 @@ const lotKey = (account, ticker) => JSON.stringify([account, ticker]);
 
 // 문자열 또는 숫자를 받아 숫자로 바꿉니다. 빈 값은 allowEmpty 여부에 따라 처리합니다.
 export function parseNumber(raw, opts) {
-  const { name, decimals, min, max, minExclusive = false, allowEmpty = false } = opts;
+  const { name, decimals, min, max, minExclusive = false, allowEmpty = false, example } = opts;
+  const hint = example ? ` (예: ${example})` : '';
   let s;
   if (typeof raw === 'number') {
     if (!Number.isFinite(raw)) return { ok: false, error: `${name}: 올바른 숫자가 아닙니다` };
@@ -64,7 +65,7 @@ export function parseNumber(raw, opts) {
   if (s === '') {
     return allowEmpty ? { ok: true, value: 0 } : { ok: false, error: `${name}: 값을 입력하세요` };
   }
-  if (!NUM_RE.test(s)) return { ok: false, error: `${name}: 숫자만 입력하세요 (예: 185.2)` };
+  if (!NUM_RE.test(s)) return { ok: false, error: `${name}: 숫자만 입력하세요${hint}` };
   const dot = s.indexOf('.');
   const dec = dot === -1 ? 0 : s.length - dot - 1;
   if (decimals !== undefined && dec > decimals) {
@@ -143,10 +144,10 @@ export function validateTrade(raw, { today = isoToday() } = {}) {
   const date = pick('date', parseDate(raw.date, today));
   const ticker = pick('ticker', parseTicker(raw.ticker));
   const side = pick('side', parseSide(raw.side));
-  const qty = pick('qty', parseNumber(raw.qty, { name: '수량', decimals: L.qtyDecimals, min: 0, minExclusive: true, max: L.maxQty }));
-  const price = pick('price', parseNumber(raw.price, { name: '단가(USD)', decimals: L.priceDecimals, min: 0, minExclusive: true, max: L.maxPriceUSD }));
-  const fee = pick('fee', parseNumber(raw.fee, { name: '수수료(USD)', decimals: L.feeDecimals, min: 0, max: L.maxFeeUSD, allowEmpty: true }));
-  const fx = pick('fx', parseNumber(raw.fx, { name: '환율(원/달러)', decimals: L.fxDecimals, min: L.minFxKRW, max: L.maxFxKRW }));
+  const qty = pick('qty', parseNumber(raw.qty, { name: '수량', decimals: L.qtyDecimals, min: 0, minExclusive: true, max: L.maxQty, example: '2.5' }));
+  const price = pick('price', parseNumber(raw.price, { name: '단가(USD)', decimals: L.priceDecimals, min: 0, minExclusive: true, max: L.maxPriceUSD, example: '185.20' }));
+  const fee = pick('fee', parseNumber(raw.fee, { name: '수수료(USD)', decimals: L.feeDecimals, min: 0, max: L.maxFeeUSD, allowEmpty: true, example: '0.5' }));
+  const fx = pick('fx', parseNumber(raw.fx, { name: '환율(원/달러)', decimals: L.fxDecimals, min: L.minFxKRW, max: L.maxFxKRW, example: '1350.5' }));
   const account = pick('account', parseAccount(raw.account));
   if (errors.length) return { ok: false, errors };
   return { ok: true, errors: [], trade: { date, ticker, side, qty, price, fee, fx, account } };
