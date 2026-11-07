@@ -35,31 +35,45 @@
     <section class="hero">
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <p class="eyebrow">2026년 귀속 · 2027년 5월 신고 대비</p>
-          <h1>해외주식 양도세, 엑셀 대신 한 화면에서</h1>
-          <p class="lede">매수·매도 기록을 넣으면 선입선출로 취득가를 맞추고, 신고용 CSV와 연말 절세 시뮬레이션까지 한 번에 준비합니다. 데이터는 이 브라우저에만 저장됩니다.</p>
+          <p class="kicker">2026년 귀속 · 2027년 5월 신고 준비</p>
+          <h1>해외주식 양도세를 거래내역에서 바로 계산합니다</h1>
+          <p class="lede">증권사 체결내역을 붙여넣으면 선입선출로 취득가를 맞추고, 계좌별 손익과 연도 비교, 신고용 CSV와 인쇄용 리포트를 만듭니다. 데이터는 이 브라우저에만 저장됩니다.</p>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="#app">내 거래 입력하기</a>
-            <a class="btn btn-ghost" href="#how">작동 방식 보기</a>
+            <a class="btn btn-primary btn-lg" href="#app">계산기 열기</a>
+            <a class="btn btn-ghost btn-lg" href="#how">작동 방식 보기</a>
           </div>
           <ul class="hero-points" aria-label="핵심 내용">
-            <li>FIFO 매칭 · 부분 체결 지원</li>
-            <li>손익 통산 · 공제 250만원 반영</li>
-            <li>계정 가입 없음</li>
+            <li>선입선출 매칭, 부분 체결 지원</li>
+            <li>계좌별 분리 보기와 합산 보기</li>
+            <li>가입 없이 브라우저에서 바로 사용</li>
           </ul>
+          <p class="fine">세율, 기본공제, 신고 기간은 모두 확인 필요 상태입니다. 공식 자료로 다시 확인하지 않았으니 참고용으로만 보세요.</p>
         </div>
-        <aside class="hero-card" aria-label="예시 결과 화면 (가상 숫자)">
-          <p class="hero-card-tag">예시 화면 · 가상의 숫자</p>
-          <p class="hero-card-title">2026년 귀속 요약</p>
-          <dl>
-            <div><dt>양도차익 합계</dt><dd>1,240,000원</dd></div>
-            <div><dt>양도차손 합계</dt><dd>310,000원</dd></div>
-            <div><dt>과세표준</dt><dd>0원</dd></div>
-            <div class="hero-card-key"><dt>예상 세액 (22%)</dt><dd>0원</dd></div>
-            <div><dt>공제 여유</dt><dd>1,570,000원</dd></div>
-          </dl>
-          <p class="hero-card-foot">이 금액까지 이익을 실현해도 세금은 0원입니다.</p>
-        </aside>
+
+        <figure class="shot" aria-label="연간 요약 화면 예시 (가상 숫자)">
+          <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span>gainlot · 연간 요약</span></div>
+          <div class="shot-body">
+            <div class="shot-head">
+              <p class="shot-title">2026년 귀속 · 계좌 합산</p>
+              <span class="shot-tag">예시 숫자</span>
+            </div>
+            <div class="mini-stats">
+              <div class="mini-stat"><span>양도차익 합계</span><b>1,240,000원</b></div>
+              <div class="mini-stat"><span>양도차손 합계</span><b>310,000원</b></div>
+              <div class="mini-stat"><span>과세표준 (공제 후)</span><b>0원</b></div>
+              <div class="mini-stat key"><span>예상 세액 (22%, 확인 필요)</span><b>0원</b></div>
+            </div>
+            <table class="mini-table">
+              <caption class="sr-only">연도별 비교 예시</caption>
+              <thead><tr><th scope="col">귀속</th><th scope="col" class="n">순손익</th><th scope="col" class="n hide-s">과세표준</th><th scope="col" class="n">공제 여유</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">2025년</th><td class="n">+460,000원</td><td class="n hide-s">0원</td><td class="n">2,039,000원</td></tr>
+                <tr class="cur"><th scope="row">2026년</th><td class="n">+930,000원</td><td class="n hide-s">0원</td><td class="n">1,570,000원</td></tr>
+              </tbody>
+            </table>
+            <p class="shot-foot">공제 여유 안에서는 세금이 0원으로 계산됩니다 (기준 확인 필요).</p>
+          </div>
+        </figure>
       </div>
     </section>
 
@@ -67,23 +81,74 @@
       <div class="wrap">
         <p class="kicker">기능</p>
         <h2>증권사 내역을 신고서 숫자로 바꿔 드려요</h2>
-        <div class="cards">
-          <article class="card">
-            <h3>거래 입력과 CSV 가져오기</h3>
-            <p>체결내역을 붙여넣거나 JSON 백업으로 옮깁니다. 잘못된 행은 줄 번호와 사유를 알려 주고, 나머지만 가져옵니다.</p>
-          </article>
-          <article class="card">
-            <h3>선입선출 손익 계산</h3>
-            <p>매도 건마다 어떤 매수 lot을 썼는지 보여 줍니다. 환율은 거래마다 직접 입력한 값을 씁니다.</p>
-          </article>
-          <article class="card">
-            <h3>연말 절세 시뮬레이터</h3>
-            <p>현재가를 넣으면 지금 팔았을 때 세금이 얼마나 달라지는지 계산하고, 남은 250만원 공제 여유를 제안합니다.</p>
-          </article>
-          <article class="card">
-            <h3>신고 준비와 신고용 CSV</h3>
-            <p>신고 D-day와 준비물 체크리스트, 매도 건별 양도가액·취득가액·필요경비·양도차익을 담은 CSV를 내려받습니다.</p>
-          </article>
+        <div class="feature-list">
+          <div class="feature-row">
+            <div class="feature-copy">
+              <h3>증권사 내보내기 파일을 그대로 붙여넣습니다</h3>
+              <p>체결일자, 매매구분, 체결수량, 적용환율처럼 흔한 열 이름을 인식합니다. 원화 단가 열이나 취소 체결이 섞이면 줄 번호와 이유를 알려 주고, 나머지만 가져옵니다.</p>
+            </div>
+            <figure class="shot" aria-label="CSV 가져오기 결과 화면 예시">
+              <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span>가져오기 결과</span></div>
+              <div class="shot-body">
+                <p class="rep-ok">12건을 가져왔습니다. 이미 있던 거래 1건은 건너뛰었습니다.</p>
+                <p class="hint">인식한 열: 체결일자→날짜 · 종목코드→종목 · 매매구분→구분 · 체결수량→수량 · 적용환율→환율</p>
+                <table class="mini-table">
+                  <caption class="sr-only">가져오지 않은 행</caption>
+                  <thead><tr><th scope="col">줄</th><th scope="col">사유</th></tr></thead>
+                  <tbody>
+                    <tr><th scope="row">7행</th><td>수량: 숫자만 입력하세요 (예: 2.5)</td></tr>
+                    <tr><th scope="row">9행</th><td>구분: 취소·정정 체결은 가져올 수 없습니다</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </figure>
+          </div>
+
+          <div class="feature-row flip">
+            <div class="feature-copy">
+              <h3>계좌별로 나눠 보고, 세금은 한 번에 계산합니다</h3>
+              <p>계좌마다 이름을 붙이면 같은 계좌 안에서만 매도 수량을 맞춥니다. 계좌별 손익은 나눠 보고, 기본공제는 사람 단위로 한 번만 적용해 세액을 계산합니다 (확인 필요).</p>
+            </div>
+            <figure class="shot" aria-label="계좌별 분리 보기 화면 예시">
+              <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span>연간 요약 · 계좌별 분리</span></div>
+              <div class="shot-body">
+                <div class="shot-head">
+                  <p class="shot-title">2026년 귀속</p>
+                  <div class="seg" aria-hidden="true"><span>계좌 합산</span><span class="on">계좌별 분리</span></div>
+                </div>
+                <table class="mini-table">
+                  <caption class="sr-only">계좌별 손익 예시</caption>
+                  <thead><tr><th scope="col">계좌</th><th scope="col" class="n">매도</th><th scope="col" class="n">순손익</th></tr></thead>
+                  <tbody>
+                    <tr><th scope="row">예시 계좌 1</th><td class="n">1건</td><td class="n">+143,000원</td></tr>
+                    <tr><th scope="row">예시 계좌 2</th><td class="n">1건</td><td class="n">−81,000원</td></tr>
+                  </tbody>
+                </table>
+                <p class="shot-foot">세액은 합산 기준으로만 계산합니다. 예시 숫자입니다.</p>
+              </div>
+            </figure>
+          </div>
+
+          <div class="feature-row">
+            <div class="feature-copy">
+              <h3>연말에 팔면 세금이 얼마나 달라지는지 봅니다</h3>
+              <p>현재가를 넣으면 미실현 손익이 보이고, 매도 수량을 넣으면 같은 선입선출 규칙으로 세금 차이를 계산합니다. 공제 여유를 채우는 제안은 근사치이고, 결과 카드의 세금이 정확한 계산입니다.</p>
+            </div>
+            <figure class="shot" aria-label="절세 시뮬레이터 화면 예시">
+              <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span>절세 시뮬레이터</span></div>
+              <div class="shot-body">
+                <div class="field-sim" aria-hidden="true">
+                  <div><span>종목 AAPL 현재가 (USD)</span><b>$200.00</b></div>
+                  <div><span>현재 환율 (원/달러)</span><b>1,380</b></div>
+                </div>
+                <div class="mini-stats">
+                  <div class="mini-stat"><span>현재 예상 세액</span><b>220,000원</b></div>
+                  <div class="mini-stat key"><span>세금 차이</span><b>220,000원 절세</b></div>
+                </div>
+                <p class="shot-foot">예시 숫자입니다. 실제 결과는 입력값과 확인 필요 상수에 따라 달라집니다.</p>
+              </div>
+            </figure>
+          </div>
         </div>
       </div>
     </section>
@@ -96,17 +161,17 @@
           <li class="step">
             <span class="step-num" aria-hidden="true">1</span>
             <h3>거래 내역 넣기</h3>
-            <p>날짜, 종목, 매수·매도, 수량, 달러 단가, 수수료, 거래 환율을 입력하거나 CSV를 붙여넣습니다.</p>
+            <p>날짜, 계좌, 종목, 매수·매도, 수량, 달러 단가, 수수료, 거래 환율을 입력하거나 CSV를 붙여넣습니다. 빈 화면이면 예시 데이터로 먼저 둘러볼 수 있습니다.</p>
           </li>
           <li class="step">
             <span class="step-num" aria-hidden="true">2</span>
             <h3>연도별 결과 확인</h3>
-            <p>매도 건별 차익과 연간 과세표준, 예상 세액을 확인하고 lot 상세에서 계산 근거를 봅니다.</p>
+            <p>매도 건별 차익과 연간 과세표준, 예상 세액을 확인합니다. 연도 비교표와 계좌별 분리 보기로 나눠서 볼 수 있습니다.</p>
           </li>
           <li class="step">
             <span class="step-num" aria-hidden="true">3</span>
-            <h3>신고용 CSV 내려받기</h3>
-            <p>신고 준비 탭에서 체크리스트를 확인하고, 매도 건별 CSV를 받아 신고 자료와 대조합니다.</p>
+            <h3>신고용 CSV와 리포트</h3>
+            <p>신고 준비 탭에서 체크리스트를 확인하고, 매도 건별 CSV를 받거나 인쇄용 리포트를 출력해 신고 자료와 대조합니다.</p>
           </li>
         </ol>
       </div>
@@ -475,6 +540,10 @@
           <details>
             <summary>수수료는 세금 계산에 반영되나요?</summary>
             <p>기본으로 필요경비에 산입합니다. 옵션에서 끌 수 있고, 어느 쪽이 맞는지는 세무 확인이 필요합니다.</p>
+          </details>
+          <details>
+            <summary>계좌가 여러 개면 어떻게 계산하나요?</summary>
+            <p>계좌마다 이름을 붙이면 같은 계좌 안에서만 선입선출로 매도 수량을 맞춥니다. 세액은 모든 계좌를 합산해 한 번만 계산하고, 기본공제도 사람 단위로 연 1회 적용합니다. 이 방식이 신고에 맞는지는 세무 확인이 필요합니다.</p>
           </details>
           <details>
             <summary>데이터는 어디에 저장되나요?</summary>
