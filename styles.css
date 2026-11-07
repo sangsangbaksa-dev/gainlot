@@ -416,3 +416,7 @@ table.data tr.current th, table.data tr.current td { background: var(--accent-so
   #print-area h2 { font-size: 11.5pt; margin: 0.3rem 0 0.2rem; }
   #print-area .print-warn { font-size: 8.5pt; }
 }
+
+/* 2차 정리: 체크박스와 건너뛰기 링크도 44px 탭 영역을 갖춤 */
+label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { min-height: 44px; display: inline-flex; align-items: center; gap: 0.5rem; }
+.skip, .skip-link, a.skip { min-height: 44px; display: inline-flex; align-items: center; }
